@@ -99,7 +99,7 @@ export function buildKnowledge({ sourceDir = resolve(process.cwd(), "..", "docs"
   const result = {
     generatedAt: new Date().toISOString(),
     sourceDir,
-    scope: "灵山胜境 + 拈花湾禅意小镇（子景区）",
+    scope: "灵山胜境 拈花湾禅意小镇",
     documents,
     spots,
     guideSections,

@@ -3,7 +3,8 @@
   <div
     class="layout-sidebar"
     v-if="showLeftMenu || isDualMenu"
-    :class="{ 'no-border': menuList.length === 0 }"
+    :class="{ 'no-border': menuList.length === 0, 'has-photo-bg': isVerticalMenu }"
+    :style="sidebarBgStyle"
   >
     <!-- 双列菜单（左侧） -->
     <div
@@ -174,6 +175,13 @@
   )
   const isDualMenu = computed(() => menuType.value === MenuTypeEnum.DUAL_MENU)
   const isDualMenuCollapsed = computed(() => isDualMenu.value && !menuOpen.value)
+
+  // 仅「垂直」菜单布局（左侧菜单）为侧边栏铺设登录页风格的背景图片；
+  // 切换到其他布局时通过 has-photo-bg 类淡出（见 theme.scss）。
+  const isVerticalMenu = computed(() => menuType.value === MenuTypeEnum.LEFT)
+  const sidebarBgStyle = computed(() => ({
+    '--sidebar-bg-image': `url("${import.meta.env.BASE_URL}images/sidebar-bg.png")`
+  }))
 
   // 移动端屏幕判断（使用 computed 避免重复计算）
   const isMobileScreen = computed(() => width.value < MOBILE_BREAKPOINT)

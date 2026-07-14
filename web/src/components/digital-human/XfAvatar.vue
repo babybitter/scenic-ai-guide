@@ -137,11 +137,12 @@
     width: 100%;
     height: 100%;
 
+    // 讯飞 SDK 自行按 1080×960 原生尺寸渲染 video/canvas 并按容器等比缩放（contain），
+    // 不要强行覆盖其内部尺寸，否则会与 SDK 的缩放叠加导致画面被二次缩小。
+    // 消除上下墨绿边的做法：让舞台与数字人 1080:960 同比（见 experience.vue 的 is-avatar-fixed）。
     :deep(video),
     :deep(canvas) {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover;
+      display: block;
     }
   }
 

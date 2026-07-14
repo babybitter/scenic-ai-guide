@@ -191,7 +191,7 @@
   function barOption(items: { label: string; value: number }[]) {
     return {
       color: [PALETTE[0]],
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, confine: true },
       grid: baseGrid,
       xAxis: {
         type: 'category',
@@ -219,7 +219,7 @@
     // 从上到下由高到低，故数据倒序放入
     const sorted = [...items].sort((a, b) => a.value - b.value)
     return {
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, confine: true },
       grid: { ...baseGrid, left: 12 },
       xAxis: {
         type: 'value',
@@ -246,7 +246,7 @@
   function pieOption(items: { label: string; value: number }[], radius: [string, string] = ['40%', '68%']) {
     return {
       color: PALETTE,
-      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', confine: true },
       legend: { bottom: 0, textStyle: { color: AXIS_COLOR, fontSize: 12 }, type: 'scroll' },
       series: [
         {

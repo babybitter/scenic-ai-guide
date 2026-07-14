@@ -6,7 +6,7 @@
   <div class="guide-page">
     <!-- 左：数字人展示区 -->
     <section class="dh-column">
-      <div class="dh-box" :class="{ 'is-active': asking }">
+      <div class="dh-box" :class="{ 'is-active': asking, 'is-avatar-fixed': avatarEngine === 'xfyun' }">
         <DigitalHumanAvatar ref="avatarRef" @ready="onAvatarReady" @error="onAvatarError" />
       </div>
       <div class="dh-caption">
@@ -213,13 +213,16 @@
   const asking = ref(false)
   const statusTip = ref('数字人接入中…')
   const lastLabel = ref('')
+  // 当前渲染引擎：讯飞（xfyun）云端流按 1080:960 输出，需让展区同比以消除上下墨绿边；
+  // Live2D 自适应填充，保持原样。默认按后台主用的 xfyun 处理，避免首次加载时布局跳动。
+  const avatarEngine = ref<string>('xfyun')
   const rating = ref(0)
   const lastMessageId = ref('')
 
   const quickQuestions = [
     '灵山大佛有多高',
     '九龙灌浴几点开始',
-    '灵山梵宫有什么看点',
+    '灵山梵宫的看点',
     '景区开放时间',
     '推荐一条经典路线'
   ]
@@ -258,7 +261,8 @@
   }
 
   // ---- 数字人事件 ----
-  function onAvatarReady() {
+  function onAvatarReady(config: { engine?: string } | null) {
+    if (config?.engine) avatarEngine.value = config.engine
     statusTip.value = '数字人已就绪，请开始提问'
   }
   function onAvatarError(msg: string) {
@@ -448,6 +452,7 @@
     display: flex;
     flex: 0 0 42%;
     flex-direction: column;
+    justify-content: center;
     max-width: 520px;
   }
 
@@ -457,6 +462,14 @@
     min-height: 0;
     border-radius: 12px;
     transition: box-shadow 0.4s ease;
+  }
+
+  // 讯飞数字人云端按 1080:960 输出，展区同比即可让画面铺满、消除上下墨绿边；
+  // 竖向留白交给列的 justify-content: center 垂直居中。
+  .dh-box.is-avatar-fixed {
+    flex: 0 0 auto;
+    width: 100%;
+    aspect-ratio: 1080 / 960;
   }
 
   // 生成回答时，数字人展区透出柔和的金色呼吸光晕，暗示"正在准备讲解"

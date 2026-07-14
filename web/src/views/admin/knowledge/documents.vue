@@ -31,7 +31,12 @@
       </ElCol>
       <ElCol :xs="12" :sm="8" :md="4">
         <ElCard shadow="hover" class="stat-card">
-          <p class="stat-value stat-text">{{ summary?.scope || '-' }}</p>
+          <p class="stat-value stat-text">
+            <template v-if="scopeLines.length">
+              <span v-for="line in scopeLines" :key="line" class="scope-line">{{ line }}</span>
+            </template>
+            <template v-else>-</template>
+          </p>
           <p class="stat-label">知识范围</p>
         </ElCard>
       </ElCol>
@@ -114,6 +119,11 @@
 
   const summary = ref<KnowledgeSummary | null>(null)
   const uploads = ref<UploadRecord[]>([])
+
+  // 知识范围按空白拆分为多行展示（如「灵山胜境」「拈花湾禅意小镇」各占一行）
+  const scopeLines = computed(() =>
+    (summary.value?.scope || '').split(/\s+/).filter(Boolean)
+  )
   const loading = ref(false)
   const rebuilding = ref(false)
   const uploading = ref(false)
@@ -234,6 +244,11 @@
 
     .stat-text {
       font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .scope-line {
+      display: block;
     }
 
     .stat-label {
