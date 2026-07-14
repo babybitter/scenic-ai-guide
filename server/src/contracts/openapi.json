@@ -1,0 +1,249 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Lingshan AI Guide API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check"
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Admin login"
+      }
+    },
+    "/api/visitor/session": {
+      "post": {
+        "summary": "Create anonymous visitor session"
+      }
+    },
+    "/api/uploads": {
+      "get": {
+        "summary": "List uploaded knowledge files"
+      },
+      "post": {
+        "summary": "Upload a knowledge file using base64 content"
+      }
+    },
+    "/api/schema": {
+      "get": {
+        "summary": "Return database schema draft"
+      }
+    },
+    "/api/knowledge/summary": {
+      "get": {
+        "summary": "Return generated knowledge base summary"
+      }
+    },
+    "/api/knowledge/rebuild": {
+      "post": {
+        "summary": "Rebuild local Lingshan knowledge assets from official DOCX files"
+      }
+    },
+    "/api/scenic-spots": {
+      "get": {
+        "summary": "List structured Lingshan scenic spots"
+      }
+    },
+    "/api/knowledge/chunks": {
+      "get": {
+        "summary": "List generated RAG chunks"
+      }
+    },
+    "/api/knowledge/search": {
+      "post": {
+        "summary": "Search generated knowledge chunks by keyword or hybrid scoring"
+      }
+    },
+    "/api/chat/ask": {
+      "post": {
+        "summary": "RAG guide answer: grounded reply, citations, quality/emotion label and latency breakdown",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question"],
+                "properties": {
+                  "question": { "type": "string" },
+                  "sessionId": { "type": "string" },
+                  "mode": { "type": "string", "enum": ["qa", "explain", "route"] },
+                  "history": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": { "type": "string", "enum": ["user", "assistant"] },
+                        "content": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/stream": {
+      "post": {
+        "summary": "Streaming guide answer over Server-Sent Events (delta/done/error)"
+      }
+    },
+    "/api/chat/narrate": {
+      "post": {
+        "summary": "Generate a ~1 minute spoken narration for a scenic spot"
+      }
+    },
+    "/api/chat/accompany": {
+      "post": {
+        "summary": "Generate real-time accompanying narration on arrival at a spot"
+      }
+    },
+    "/api/chat/history": {
+      "get": {
+        "summary": "Return recorded messages for a visitor session"
+      }
+    },
+    "/api/chat/faq-cache": {
+      "get": {
+        "summary": "Inspect FAQ answer cache stats (admin token required)"
+      }
+    },
+    "/api/voice/asr": {
+      "post": {
+        "summary": "Transcribe visitor audio or provided transcript through the configured ASR provider"
+      }
+    },
+    "/api/voice/tts": {
+      "post": {
+        "summary": "Synthesize guide answer text into segmented audio URLs"
+      }
+    },
+    "/api/voice/ask": {
+      "post": {
+        "summary": "Voice pipeline: ASR, RAG answer, segmented TTS and latency breakdown"
+      }
+    },
+    "/api/voice/tts/audio/{id}": {
+      "get": {
+        "summary": "Return a generated TTS audio segment"
+      }
+    },
+    "/api/routes/graph": {
+      "get": {
+        "summary": "Return local scenic route graph and route templates"
+      }
+    },
+    "/api/routes/recommend": {
+      "post": {
+        "summary": "Recommend a personalized route from visitor duration and interests"
+      }
+    },
+    "/api/routes/save": {
+      "post": {
+        "summary": "Save a visitor's selected route"
+      }
+    },
+    "/api/routes/saved": {
+      "get": {
+        "summary": "List saved route selections"
+      }
+    },
+    "/api/routes/node/narrate": {
+      "post": {
+        "summary": "Generate narration for a selected route node"
+      }
+    },
+    "/api/digital-human/config": {
+      "get": {
+        "summary": "Return the active digital-human configuration"
+      },
+      "post": {
+        "summary": "Update the active digital-human configuration (admin token required)"
+      }
+    },
+    "/api/digital-human/configs": {
+      "get": {
+        "summary": "List digital-human configurations"
+      }
+    },
+    "/api/digital-human/preload": {
+      "post": {
+        "summary": "Preload or warm digital-human fallback assets"
+      }
+    },
+    "/api/admin/scenic-spots": {
+      "get": {
+        "summary": "List all managed scenic spots including disabled items"
+      },
+      "post": {
+        "summary": "Create a managed scenic spot"
+      }
+    },
+    "/api/admin/scenic-spots/{id}": {
+      "put": {
+        "summary": "Update a managed scenic spot"
+      },
+      "delete": {
+        "summary": "Disable a managed scenic spot"
+      }
+    },
+    "/api/admin/faqs": {
+      "get": {
+        "summary": "List fixed admin FAQ answers"
+      },
+      "post": {
+        "summary": "Create a fixed admin FAQ answer"
+      }
+    },
+    "/api/admin/faqs/{id}": {
+      "put": {
+        "summary": "Update a fixed admin FAQ answer"
+      }
+    },
+    "/api/admin/analytics/import": {
+      "post": {
+        "summary": "Import and normalize official behavior-analysis Excel data"
+      }
+    },
+    "/api/admin/analytics/dashboard": {
+      "get": {
+        "summary": "Return operation dashboard metrics, rankings, persona and suggestions"
+      }
+    },
+    "/api/admin/conversations": {
+      "get": {
+        "summary": "List conversation summaries with optional low-satisfaction filter"
+      }
+    },
+    "/api/admin/conversations/{sessionId}": {
+      "get": {
+        "summary": "Return conversation messages, feedback and annotations"
+      }
+    },
+    "/api/admin/messages/{messageId}/annotation": {
+      "post": {
+        "summary": "Create an admin quality annotation for a message"
+      }
+    },
+    "/api/admin/messages/{messageId}/knowledge-draft": {
+      "post": {
+        "summary": "Create a knowledge-supplement draft from a message"
+      }
+    },
+    "/api/admin/feedback/clusters": {
+      "get": {
+        "summary": "Return clustered visitor feedback issues"
+      }
+    },
+    "/api/admin/service-quality/report": {
+      "get": {
+        "summary": "Return service quality report and optimization suggestions"
+      }
+    }
+  }
+}

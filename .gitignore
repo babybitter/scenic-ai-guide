@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Env & secrets
+# Frontend .env / .env.development / .env.production are non-secret config and ARE tracked.
+# Real secrets go in .env.local (frontend) or server/.env (backend) and stay untracked.
+.env.local
+*.env.local
+server/.env
+*.local
+
+# Build output
+dist/
+dist-ssr/
+
+# Runtime data
+server/data/uploads/
+server/data/*.sqlite
+server/data/*.sqlite-*
+server/backups/
+*.log
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Auto-generated (art-design-pro)
+web/src/types/import/auto-imports.d.ts
+web/src/types/import/components.d.ts
+web/.auto-import.json

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "fact_height_lingshan_buddha",
+    "category": "景点参数",
+    "question": "灵山大佛多高",
+    "expectedTopTitles": ["灵山大佛"],
+    "expectedSpotIds": ["LS-011"],
+    "expectedTerms": ["88m", "101.5m", "通高", "总高"]
+  },
+  {
+    "id": "fact_location_lingshan_buddha",
+    "category": "景点位置",
+    "question": "灵山大佛在哪里",
+    "expectedTopTitles": ["灵山大佛"],
+    "expectedSpotIds": ["LS-011"],
+    "expectedTerms": ["祥符禅寺", "秦履峰"]
+  },
+  {
+    "id": "performance_jiulong_time",
+    "category": "演艺时间",
+    "question": "九龙灌浴几点演出",
+    "expectedTopTitles": ["九龙灌浴"],
+    "expectedSpotIds": ["LS-006"],
+    "expectedTerms": ["10:00", "11:30", "13:30", "15:00"]
+  },
+  {
+    "id": "performance_fangong_jixiangsong",
+    "category": "演艺时间",
+    "question": "梵宫吉祥颂几点开始",
+    "expectedTopTitles": ["灵山梵宫", "核心景点特色详解"],
+    "expectedSpotIds": ["LS-013"],
+    "expectedTerms": ["吉祥颂", "10:35", "11:30", "14:00", "16:00"]
+  },
+  {
+    "id": "ticket_price",
+    "category": "门票政策",
+    "question": "灵山胜境门票多少钱",
+    "expectedTopTitles": ["实用游览贴士"],
+    "expectedSpotIds": [],
+    "expectedTerms": ["成人票", "210元", "半价票", "105元"]
+  },
+  {
+    "id": "route_family",
+    "category": "路线推荐",
+    "question": "推荐一条亲子路线",
+    "expectedTopTitles": ["亲子家庭路线"],
+    "expectedSpotIds": [],
+    "expectedTerms": ["4小时", "九龙灌浴", "百子戏弥勒", "五印坛城"]
+  },
+  {
+    "id": "route_history",
+    "category": "路线推荐",
+    "question": "历史文化爱好者怎么游览",
+    "expectedTopTitles": ["历史文化爱好者路线"],
+    "expectedSpotIds": [],
+    "expectedTerms": ["6小时", "祥符禅寺", "灵山大佛", "灵山梵宫"]
+  },
+  {
+    "id": "route_nature",
+    "category": "路线推荐",
+    "question": "自然风光爱好者路线怎么走",
+    "expectedTopTitles": ["自然风光爱好者路线"],
+    "expectedSpotIds": [],
+    "expectedTerms": ["5小时", "菩提大道", "太湖", "曼飞龙塔"]
+  },
+  {
+    "id": "highlight_fangong",
+    "category": "景点特色",
+    "question": "灵山梵宫有什么看点",
+    "expectedTopTitles": ["灵山梵宫"],
+    "expectedSpotIds": ["LS-013"],
+    "expectedTerms": ["佛教艺术", "吉祥颂", "建筑面积"]
+  },
+  {
+    "id": "culture_xiangfu_history",
+    "category": "历史文化",
+    "question": "祥符禅寺有什么历史",
+    "expectedTopTitles": ["祥符禅寺"],
+    "expectedSpotIds": ["LS-010"],
+    "expectedTerms": ["唐代", "古刹", "千年"]
+  },
+  {
+    "id": "culture_origin_xuanzang",
+    "category": "历史文化",
+    "question": "小灵山和玄奘有什么关系",
+    "expectedTopTitles": ["小灵山的佛教缘起", "景区概况与千年历史渊源"],
+    "expectedSpotIds": [],
+    "expectedTerms": ["玄奘", "小灵山", "灵鹫山"]
+  },
+  {
+    "id": "photo_checkin",
+    "category": "拍照打卡",
+    "question": "哪里适合拍照打卡",
+    "expectedTopTitles": ["曼飞龙塔", "灵山大照壁", "阿育王柱", "五智门"],
+    "expectedSpotIds": ["LS-001", "LS-004", "LS-008", "LS-015"],
+    "expectedTerms": ["拍照", "打卡"]
+  },
+  {
+    "id": "open_five_wisdom_gate",
+    "category": "开放信息",
+    "question": "五智门开放时间",
+    "expectedTopTitles": ["五智门"],
+    "expectedSpotIds": ["LS-004"],
+    "expectedTerms": ["全天开放", "无时间限制"]
+  },
+  {
+    "id": "spot_baizi_mile",
+    "category": "亲子体验",
+    "question": "百子戏弥勒适合亲子玩吗",
+    "expectedTopTitles": ["百子戏弥勒"],
+    "expectedSpotIds": ["LS-009"],
+    "expectedTerms": ["亲子", "弥勒"]
+  },
+  {
+    "id": "spot_wuyin_tancheng",
+    "category": "文化体验",
+    "question": "五印坛城是什么风格",
+    "expectedTopTitles": ["五印坛城"],
+    "expectedSpotIds": ["LS-014"],
+    "expectedTerms": ["藏传佛教", "坛城"]
+  },
+  {
+    "id": "spot_manfeilong",
+    "category": "文化体验",
+    "question": "曼飞龙塔有什么特色",
+    "expectedTopTitles": ["曼飞龙塔"],
+    "expectedSpotIds": ["LS-015"],
+    "expectedTerms": ["南传佛教", "九塔", "白塔"]
+  },
+  {
+    "id": "spot_buddha_foot",
+    "category": "祈福体验",
+    "question": "佛足坛可以做什么",
+    "expectedTopTitles": ["佛足坛"],
+    "expectedSpotIds": ["LS-003"],
+    "expectedTerms": ["祈福", "佛足", "吉祥图案"]
+  },
+  {
+    "id": "spot_bodhi_road",
+    "category": "自然体验",
+    "question": "菩提大道有什么特色",
+    "expectedTopTitles": ["菩提大道"],
+    "expectedSpotIds": ["LS-005"],
+    "expectedTerms": ["菩提树", "禅意"]
+  },
+  {
+    "id": "spot_ashoka_pillar",
+    "category": "文化体验",
+    "question": "阿育王柱代表什么",
+    "expectedTopTitles": ["阿育王柱"],
+    "expectedSpotIds": ["LS-008"],
+    "expectedTerms": ["阿育王", "佛法", "和平"]
+  },
+  {
+    "id": "spot_wuming_bridge",
+    "category": "文化体验",
+    "question": "五明桥的五明是什么意思",
+    "expectedTopTitles": ["五明桥"],
+    "expectedSpotIds": ["LS-002"],
+    "expectedTerms": ["声明", "因明", "内明", "医方明", "工巧明"]
+  }
+]

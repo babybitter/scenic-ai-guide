@@ -1,0 +1,35 @@
+{
+  "name": "lingshan-ai-guide",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "start": "node src/app.mjs",
+    "check": "node scripts/check.mjs",
+    "env:check": "node scripts/env-check.mjs",
+    "backup": "node scripts/backup-data.mjs",
+    "restore": "node scripts/restore-data.mjs",
+    "build:knowledge": "node scripts/build-knowledge.mjs",
+    "test:retrieval": "node scripts/test-retrieval.mjs",
+    "eval:retrieval": "node scripts/eval-retrieval.mjs",
+    "eval:chat": "node scripts/eval-chat-accuracy.mjs",
+    "test:chat": "node scripts/test-chat.mjs",
+    "test:routes": "node scripts/test-routes.mjs",
+    "test:voice": "node scripts/test-voice.mjs",
+    "test:digital-human": "node scripts/test-digital-human.mjs",
+    "test:analytics": "node scripts/test-analytics.mjs",
+    "test:service-quality": "node scripts/test-service-quality.mjs",
+    "test:concurrency": "node scripts/test-concurrency.mjs",
+    "test:demo-mode": "node scripts/test-demo-mode.mjs",
+    "test:xfyun-tts": "node scripts/test-xfyun-tts.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pixi-live2d-display": "^0.4.0",
+    "pixi.js": "^6.5.10",
+    "xlsx": "^0.18.5"
+  }
+}
