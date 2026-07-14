@@ -1,50 +1,166 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { randomBytes } from "node:crypto";
 import XLSX from "xlsx";
 import { listAllMessages } from "./conversation.mjs";
 import { listFeedback } from "./feedback.mjs";
 import { listSavedRoutes } from "./routePlanner.mjs";
 import { loadKnowledge } from "./knowledgeBuild.mjs";
+import { getDb } from "../db/database.mjs";
 
 const EXCEL_FILE = "景点景区旅游数据行为分析数据.xlsx";
 let cache = null;
 
+// B8-01..03: the behaviour dataset is served from the tourist_behavior table.
+// On first use (or after a forced reload) the official Excel is parsed, filtered
+// to Lingshan-related records, and persisted so later reads stay fast.
 export function loadBehaviorDataset({ force = false } = {}) {
   if (cache && !force) {
     return cache;
   }
 
-  const filePath = findBehaviorExcelFile();
-  if (!existsSync(filePath)) {
-    cache = buildSeedDataset("excel_missing");
-    return cache;
+  if (!force) {
+    const persisted = readBehaviorFromDb();
+    if (persisted.length) {
+      cache = { source: "sqlite", rows: persisted };
+      return cache;
+    }
   }
 
+  const parsed = parseBehaviorExcel();
+  if (parsed.rows.length) {
+    persistBehaviorRows(parsed.rows);
+    cache = parsed;
+  } else {
+    cache = parsed.error ? parsed : buildSeedDataset(parsed.reason || "no_lingshan_rows");
+  }
+  return cache;
+}
+
+function readBehaviorFromDb() {
+  try {
+    return getDb()
+      .prepare("SELECT * FROM tourist_behavior")
+      .all()
+      .map((row) => ({
+        touristId: row.tourist_id,
+        age: row.age,
+        gender: row.gender,
+        attractionName: row.attraction_name,
+        visitDate: row.visit_date,
+        stayDuration: row.stay_duration,
+        ticketCost: row.ticket_cost,
+        foodCost: row.food_cost,
+        shoppingCost: row.shopping_cost,
+        transportCost: row.transport_cost,
+        entertainmentCost: row.entertainment_cost,
+        totalCost: row.total_cost,
+        groupSize: row.group_size,
+        satisfaction: row.satisfaction
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function persistBehaviorRows(rows) {
+  try {
+    const db = getDb();
+    const insert = db.prepare(
+      `INSERT INTO tourist_behavior
+         (id, tourist_id, age, gender, attraction_name, visit_date, stay_duration,
+          ticket_cost, food_cost, shopping_cost, transport_cost, entertainment_cost,
+          total_cost, group_size, satisfaction)
+       VALUES
+         (@id, @tourist_id, @age, @gender, @attraction_name, @visit_date, @stay_duration,
+          @ticket_cost, @food_cost, @shopping_cost, @transport_cost, @entertainment_cost,
+          @total_cost, @group_size, @satisfaction)`
+    );
+    const tx = db.transaction((items) => {
+      for (const row of items) {
+        insert.run({
+          id: `tb_${Date.now()}_${randomBytes(4).toString("hex")}`,
+          tourist_id: row.touristId || "",
+          age: numOrNull(row.age),
+          gender: row.gender || "",
+          attraction_name: row.attractionName || "",
+          visit_date: row.visitDate || "",
+          stay_duration: numOrNull(row.stayDuration),
+          ticket_cost: numOrNull(row.ticketCost),
+          food_cost: numOrNull(row.foodCost),
+          shopping_cost: numOrNull(row.shoppingCost),
+          transport_cost: numOrNull(row.transportCost),
+          entertainment_cost: numOrNull(row.entertainmentCost),
+          total_cost: numOrNull(row.totalCost),
+          group_size: numOrNull(row.groupSize),
+          satisfaction: numOrNull(row.satisfaction)
+        });
+      }
+    });
+    tx(rows);
+  } catch {
+    // Persistence is best-effort; the dashboard still works from the parsed rows.
+  }
+}
+
+function numOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Re-parse the Excel and replace the persisted rows (used by scripts/db-init).
+export function importBehaviorFromExcel() {
+  const parsed = parseBehaviorExcel();
+  if (parsed.rows.length) {
+    try {
+      getDb().prepare("DELETE FROM tourist_behavior").run();
+    } catch {
+      // ignore
+    }
+    persistBehaviorRows(parsed.rows);
+  }
+  cache = parsed.rows.length ? { source: "excel", rows: parsed.rows } : buildSeedDataset(parsed.reason || "no_lingshan_rows");
+  return { imported: parsed.rows.length, source: parsed.source, filePath: parsed.filePath };
+}
+
+function parseBehaviorExcel() {
+  const filePath = findBehaviorExcelFile();
+  if (!existsSync(filePath)) {
+    return { source: "seed", reason: "excel_missing", rows: [], filePath };
+  }
   try {
     const workbook = XLSX.readFile(filePath, { cellDates: true });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
     const normalized = rows.map(normalizeRow).filter((row) => isLingshanRelated(row));
-    cache = normalized.length ? { source: "excel", filePath, rows: normalized } : buildSeedDataset("no_lingshan_rows");
+    return { source: "excel", filePath, rows: normalized, reason: normalized.length ? "" : "no_lingshan_rows" };
   } catch (error) {
-    cache = buildSeedDataset("excel_parse_failed");
-    cache.error = error.message;
+    return { source: "seed", reason: "excel_parse_failed", rows: [], filePath, error: error.message };
   }
-  return cache;
 }
 
 function findBehaviorExcelFile() {
-  const expected = resolve(process.cwd(), "..", "测试数据-示范景区公开资料包", EXCEL_FILE);
-  if (existsSync(expected)) {
-    return expected;
+  const fromEnv = process.env.BEHAVIOR_XLSX ? resolve(process.cwd(), process.env.BEHAVIOR_XLSX) : "";
+  const candidatesFixed = [
+    fromEnv,
+    resolve(process.cwd(), "..", "docs", "scenic-materials", EXCEL_FILE),
+    resolve(process.cwd(), "docs", "scenic-materials", EXCEL_FILE),
+    resolve(process.cwd(), "..", "测试数据-示范景区公开资料包", EXCEL_FILE)
+  ].filter(Boolean);
+  for (const candidate of candidatesFixed) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
   }
 
   const root = resolve(process.cwd(), "..");
   const candidates = [];
   collectFiles(root, candidates);
-  return candidates.find((file) => file.endsWith(EXCEL_FILE))
-    || candidates.find((file) => file.toLowerCase().endsWith(".xlsx"))
-    || expected;
+  return (
+    candidates.find((file) => file.endsWith(EXCEL_FILE)) ||
+    candidates.find((file) => file.toLowerCase().endsWith(".xlsx")) ||
+    candidatesFixed[candidatesFixed.length - 1]
+  );
 }
 
 function collectFiles(dir, out) {

@@ -1,5 +1,5 @@
 {
-  "name": "lingshan-ai-guide",
+  "name": "scenic-ai-guide-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,8 @@
     "dev": "node scripts/dev.mjs",
     "start": "node src/app.mjs",
     "check": "node scripts/check.mjs",
+    "db:init": "node scripts/db-init.mjs",
+    "test:db": "node scripts/test-db.mjs",
     "env:check": "node scripts/env-check.mjs",
     "backup": "node scripts/backup-data.mjs",
     "restore": "node scripts/restore-data.mjs",
@@ -28,8 +30,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "pixi-live2d-display": "^0.4.0",
-    "pixi.js": "^6.5.10",
+    "better-sqlite3": "^12.11.1",
     "xlsx": "^0.18.5"
   }
 }

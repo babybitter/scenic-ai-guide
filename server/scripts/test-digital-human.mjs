@@ -9,7 +9,8 @@ import {
 
 const active = getActiveDigitalHumanConfig();
 assert.equal(active.enabled, true);
-assert.ok(active.characterAsset);
+assert.ok(active.avatarId, "active config exposes an iFlytek avatarId");
+assert.ok(active.assetAvailable, "avatar is streamable when avatarId is set");
 
 const routeState = mapAnswerToDigitalHumanState({ label: "路线推荐", emotion: "微笑" });
 assert.equal(routeState.expression, "smile");

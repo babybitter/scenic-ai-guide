@@ -5,10 +5,11 @@ const requiredPaths = [
   "src/app.mjs",
   "src/config.mjs",
   "src/db/schema.mjs",
+  "src/db/database.mjs",
   "src/contracts/openapi.json",
-  "web/public/index.html",
-  "web/public/app.js",
-  "web/public/styles.css"
+  "data/generated/knowledge.json",
+  "data/generated/scenic-spots.json",
+  "data/generated/knowledge-chunks.json"
 ];
 
 const missing = requiredPaths.filter((item) => !existsSync(join(process.cwd(), item)));

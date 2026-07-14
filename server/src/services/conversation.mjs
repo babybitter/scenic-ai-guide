@@ -1,47 +1,72 @@
-// Lightweight in-memory conversation store. Supports multi-turn context
-// (AI2-07) and records per-message metadata aligned with the `messages` schema
-// (intent_label, emotion_label, latency_ms) for later session/feedback views.
+// SQLite-backed conversation store. Supports multi-turn context (AI2-07) and
+// records per-message metadata (intent_label, emotion_label, latency_ms) for
+// later session / feedback views (F10). Public signatures are unchanged so the
+// rest of the app keeps working as before.
 
 import { randomBytes } from "node:crypto";
+import { getDb } from "../db/database.mjs";
 
-const conversations = new Map();
-const MAX_TURNS_PER_SESSION = 100;
+function ensureSession(sessionId) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO visitor_sessions (id, started_at, channel, message_count)
+     VALUES (?, ?, 'web', 0)
+     ON CONFLICT(id) DO NOTHING`
+  ).run(sessionId, now);
+}
 
-function ensure(sessionId) {
-  if (!conversations.has(sessionId)) {
-    conversations.set(sessionId, []);
-  }
-  return conversations.get(sessionId);
+function toMessage(row) {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    role: row.role,
+    content: row.content,
+    intentLabel: row.intent_label,
+    emotionLabel: row.emotion_label,
+    latencyMs: row.latency_ms,
+    createdAt: row.created_at
+  };
 }
 
 export function appendMessage(sessionId, message) {
   if (!sessionId) {
     return null;
   }
-  const list = ensure(sessionId);
+  const db = getDb();
+  ensureSession(sessionId);
   const record = {
     id: `msg_${Date.now()}_${randomBytes(4).toString("hex")}`,
-    sessionId,
+    session_id: sessionId,
     role: message.role,
     content: message.content,
-    intentLabel: message.intentLabel || null,
-    emotionLabel: message.emotionLabel || null,
-    latencyMs: message.latencyMs ?? null,
-    createdAt: new Date().toISOString()
+    intent_label: message.intentLabel || null,
+    emotion_label: message.emotionLabel || null,
+    latency_ms: message.latencyMs ?? null,
+    created_at: new Date().toISOString()
   };
-  list.push(record);
-  if (list.length > MAX_TURNS_PER_SESSION) {
-    list.splice(0, list.length - MAX_TURNS_PER_SESSION);
-  }
-  return record;
+  db.prepare(
+    `INSERT INTO messages
+       (id, session_id, role, content, intent_label, emotion_label, latency_ms, created_at)
+     VALUES
+       (@id, @session_id, @role, @content, @intent_label, @emotion_label, @latency_ms, @created_at)`
+  ).run(record);
+  db.prepare(
+    "UPDATE visitor_sessions SET message_count = message_count + 1 WHERE id = ?"
+  ).run(sessionId);
+  return toMessage({ ...record });
 }
 
 export function getHistory(sessionId, limit = 6) {
   if (!sessionId) {
     return [];
   }
-  const list = conversations.get(sessionId) || [];
-  return list.slice(-limit).map((item) => ({ role: item.role, content: item.content }));
+  const rows = getDb()
+    .prepare(
+      "SELECT role, content FROM messages WHERE session_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?"
+    )
+    .all(sessionId, limit);
+  return rows.reverse().map((row) => ({ role: row.role, content: row.content }));
 }
 
 // AI2-07: find the most recently discussed scenic spot so pronoun-style
@@ -50,10 +75,11 @@ export function getLastSpotName(sessionId, spotNames = []) {
   if (!sessionId) {
     return null;
   }
-  const list = conversations.get(sessionId) || [];
-  for (let index = list.length - 1; index >= 0; index -= 1) {
-    const item = list[index];
-    const hit = spotNames.find((name) => name && item.content.includes(name));
+  const rows = getDb()
+    .prepare("SELECT content FROM messages WHERE session_id = ? ORDER BY created_at DESC, rowid DESC")
+    .all(sessionId);
+  for (const row of rows) {
+    const hit = spotNames.find((name) => name && row.content.includes(name));
     if (hit) {
       return hit;
     }
@@ -62,9 +88,15 @@ export function getLastSpotName(sessionId, spotNames = []) {
 }
 
 export function getMessages(sessionId) {
-  return conversations.get(sessionId) || [];
+  return getDb()
+    .prepare("SELECT * FROM messages WHERE session_id = ? ORDER BY created_at ASC, rowid ASC")
+    .all(sessionId)
+    .map(toMessage);
 }
 
 export function listAllMessages() {
-  return [...conversations.values()].flat();
+  return getDb()
+    .prepare("SELECT * FROM messages ORDER BY created_at ASC, rowid ASC")
+    .all()
+    .map(toMessage);
 }

@@ -1,8 +1,19 @@
 import { listAllMessages, getMessages } from "./conversation.mjs";
 import { listFeedback } from "./feedback.mjs";
 import { getDashboardAnalytics } from "./behaviorAnalytics.mjs";
+import { getDb } from "../db/database.mjs";
 
-const annotations = new Map();
+function getAnnotation(messageId) {
+  const row = getDb().prepare("SELECT * FROM message_annotations WHERE message_id = ?").get(messageId);
+  return row ? { messageId: row.message_id, label: row.label, note: row.note, createdAt: row.created_at } : null;
+}
+
+function listAnnotations() {
+  return getDb()
+    .prepare("SELECT * FROM message_annotations")
+    .all()
+    .map((row) => ({ messageId: row.message_id, label: row.label, note: row.note, createdAt: row.created_at }));
+}
 
 export function listConversationSummaries({ lowSatisfactionOnly = false } = {}) {
   const messages = listAllMessages();
@@ -37,7 +48,7 @@ export function getConversationDetail(sessionId) {
     sessionId,
     messages: messages.map((item) => ({
       ...item,
-      annotation: annotations.get(item.id) || null
+      annotation: getAnnotation(item.id)
     })),
     feedback,
     summary: listConversationSummaries().find((item) => item.sessionId === sessionId) || null
@@ -47,19 +58,20 @@ export function getConversationDetail(sessionId) {
 export function annotateMessage(messageId, input = {}) {
   const label = ["correct", "wrong", "needs_knowledge"].includes(input.label) ? input.label : "needs_knowledge";
   const note = String(input.note || "").trim();
-  const annotation = {
-    messageId,
-    label,
-    note,
-    createdAt: new Date().toISOString()
-  };
-  annotations.set(messageId, annotation);
-  return annotation;
+  const now = new Date().toISOString();
+  getDb()
+    .prepare(
+      `INSERT INTO message_annotations (message_id, label, note, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(message_id) DO UPDATE SET label = excluded.label, note = excluded.note, updated_at = excluded.updated_at`
+    )
+    .run(messageId, label, note, now, now);
+  return { messageId, label, note, createdAt: now };
 }
 
 export function createKnowledgeDraftFromMessage(messageId) {
   const message = listAllMessages().find((item) => item.id === messageId);
-  const annotation = annotations.get(messageId) || null;
+  const annotation = getAnnotation(messageId);
   const draft = {
     id: `draft_${messageId}`,
     title: `待补充知识：${String(message?.content || "游客问题").slice(0, 24)}`,
@@ -96,7 +108,7 @@ export function buildServiceQualityReport() {
   const feedback = listFeedback();
   const clusters = listFeedbackClusters();
   const dashboard = getDashboardAnalytics();
-  const wrongAnnotations = [...annotations.values()].filter((item) => item.label !== "correct");
+  const wrongAnnotations = listAnnotations().filter((item) => item.label !== "correct");
   return {
     generatedAt: new Date().toISOString(),
     conversationCount: conversations.length,

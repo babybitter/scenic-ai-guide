@@ -3,6 +3,7 @@
 
 import { randomBytes } from "node:crypto";
 import { generateSpotNarration } from "./narration.mjs";
+import { getDb } from "../db/database.mjs";
 
 const routeNodes = [
   { id: "gate_south", name: "南门入园", spotId: null, order: 1, minutes: 5, tags: ["entry"] },
@@ -91,8 +92,6 @@ const routeTemplates = [
   }
 ];
 
-const savedSelections = new Map();
-
 export function getRouteGraph() {
   return {
     nodes: routeNodes,
@@ -141,19 +140,53 @@ export function saveRouteSelection({ sessionId = "", routeId = "", route = null,
     preferences,
     createdAt: new Date().toISOString()
   };
-  const key = sessionId || "anonymous";
-  if (!savedSelections.has(key)) {
-    savedSelections.set(key, []);
-  }
-  savedSelections.get(key).push(record);
+  getDb()
+    .prepare(
+      `INSERT INTO route_selections
+         (id, session_id, route_id, route_name, route_type, duration_minutes, node_ids, tags, preferences, created_at)
+       VALUES (@id, @session_id, @route_id, @route_name, @route_type, @duration_minutes, @node_ids, @tags, @preferences, @created_at)`
+    )
+    .run({
+      id: record.id,
+      session_id: record.sessionId || "anonymous",
+      route_id: record.routeId,
+      route_name: record.routeName,
+      route_type: record.routeType,
+      duration_minutes: record.durationMinutes,
+      node_ids: JSON.stringify(record.nodeIds || []),
+      tags: JSON.stringify(selected.tags || []),
+      preferences: JSON.stringify(preferences || {}),
+      created_at: record.createdAt
+    });
   return record;
 }
 
 export function listSavedRoutes(sessionId = "") {
-  if (sessionId) {
-    return savedSelections.get(sessionId) || [];
+  const db = getDb();
+  const rows = sessionId
+    ? db.prepare("SELECT * FROM route_selections WHERE session_id = ? ORDER BY created_at ASC, rowid ASC").all(sessionId)
+    : db.prepare("SELECT * FROM route_selections ORDER BY created_at ASC, rowid ASC").all();
+  return rows.map((row) => ({
+    id: row.id,
+    sessionId: row.session_id,
+    routeId: row.route_id,
+    routeName: row.route_name,
+    routeType: row.route_type,
+    durationMinutes: row.duration_minutes,
+    nodeIds: safeParse(row.node_ids, []),
+    tags: safeParse(row.tags, []),
+    preferences: safeParse(row.preferences, {}),
+    createdAt: row.created_at
+  }));
+}
+
+function safeParse(value, fallback) {
+  try {
+    const parsed = JSON.parse(value || "null");
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
   }
-  return [...savedSelections.values()].flat();
 }
 
 export async function narrateRouteNode({ nodeId, spotId, spotName, signal } = {}) {

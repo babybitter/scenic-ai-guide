@@ -1,29 +1,48 @@
-import { randomBytes } from "node:crypto";
-import { loadKnowledge } from "./knowledgeBuild.mjs";
+// A7-06 / A7-07: SQLite-backed scenic-spot catalogue with create / edit /
+// disable and alias management. The catalogue is seeded from the generated
+// knowledge base and can then be maintained independently by admins.
 
-const overrides = new Map();
-const createdSpots = [];
+import { randomBytes } from "node:crypto";
+import { getDb } from "../db/database.mjs";
+
+function toSpot(row) {
+  return {
+    id: row.id,
+    scenicArea: row.scenic_area || "灵山胜境",
+    name: row.name || "",
+    aliases: parseJson(row.aliases, []),
+    locationText: row.location_text || "",
+    parameters: row.parameters || "",
+    coreFunction: row.core_function || "",
+    culture: row.culture || "",
+    detail: row.detail || "",
+    highlights: row.highlights || "",
+    openInfo: row.open_info || "",
+    notes: row.notes || "",
+    source: row.source || "admin",
+    enabled: Boolean(row.enabled),
+    updatedAt: row.updated_at
+  };
+}
+
+function parseJson(value, fallback) {
+  try {
+    const parsed = JSON.parse(value || "null");
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export function listManagedScenicSpots() {
-  const knowledge = loadKnowledge();
-  const base = (knowledge?.spots || []).map((spot) => ({
-    ...spot,
-    enabled: true,
-    source: "generated",
-    ...(overrides.get(spot.id) || {})
-  }));
-  return [...base, ...createdSpots].filter((spot) => spot.enabled !== false);
+  return getDb()
+    .prepare("SELECT * FROM scenic_spots WHERE enabled = 1 ORDER BY id ASC")
+    .all()
+    .map(toSpot);
 }
 
 export function listAllManagedScenicSpots() {
-  const knowledge = loadKnowledge();
-  const base = (knowledge?.spots || []).map((spot) => ({
-    ...spot,
-    enabled: true,
-    source: "generated",
-    ...(overrides.get(spot.id) || {})
-  }));
-  return [...base, ...createdSpots];
+  return getDb().prepare("SELECT * FROM scenic_spots ORDER BY id ASC").all().map(toSpot);
 }
 
 export function createScenicSpot(input = {}) {
@@ -43,12 +62,12 @@ export function createScenicSpot(input = {}) {
     ...input,
     name
   });
-  createdSpots.push(record);
+  writeSpot(record);
   return record;
 }
 
 export function updateScenicSpot(id, input = {}) {
-  const current = listAllManagedScenicSpots().find((spot) => spot.id === id);
+  const current = getDb().prepare("SELECT * FROM scenic_spots WHERE id = ?").get(id);
   if (!current) {
     const error = new Error("Scenic spot not found.");
     error.statusCode = 404;
@@ -56,18 +75,47 @@ export function updateScenicSpot(id, input = {}) {
     throw error;
   }
 
-  const next = normalizeSpot({ ...current, ...input, id });
-  const createdIndex = createdSpots.findIndex((spot) => spot.id === id);
-  if (createdIndex >= 0) {
-    createdSpots[createdIndex] = next;
-  } else {
-    overrides.set(id, next);
-  }
+  const next = normalizeSpot({ ...toSpot(current), ...input, id });
+  writeSpot(next);
   return next;
 }
 
 export function disableScenicSpot(id) {
   return updateScenicSpot(id, { enabled: false });
+}
+
+function writeSpot(spot) {
+  getDb()
+    .prepare(
+      `INSERT INTO scenic_spots
+         (id, scenic_area, name, aliases, location_text, parameters, core_function,
+          culture, detail, highlights, open_info, notes, source, enabled, updated_at)
+       VALUES
+         (@id, @scenic_area, @name, @aliases, @location_text, @parameters, @core_function,
+          @culture, @detail, @highlights, @open_info, @notes, @source, @enabled, @updated_at)
+       ON CONFLICT(id) DO UPDATE SET
+         scenic_area = @scenic_area, name = @name, aliases = @aliases,
+         location_text = @location_text, parameters = @parameters, core_function = @core_function,
+         culture = @culture, detail = @detail, highlights = @highlights, open_info = @open_info,
+         notes = @notes, source = @source, enabled = @enabled, updated_at = @updated_at`
+    )
+    .run({
+      id: spot.id,
+      scenic_area: spot.scenicArea,
+      name: spot.name,
+      aliases: JSON.stringify(spot.aliases || []),
+      location_text: spot.locationText,
+      parameters: spot.parameters,
+      core_function: spot.coreFunction,
+      culture: spot.culture,
+      detail: spot.detail,
+      highlights: spot.highlights,
+      open_info: spot.openInfo,
+      notes: spot.notes,
+      source: spot.source,
+      enabled: spot.enabled ? 1 : 0,
+      updated_at: spot.updatedAt
+    });
 }
 
 function normalizeSpot(input) {

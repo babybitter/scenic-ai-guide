@@ -35,9 +35,18 @@ import {
   listFeedbackClusters
 } from "./services/serviceQuality.mjs";
 import { schema } from "./db/schema.mjs";
+import { getDb } from "./db/database.mjs";
+
+// The API server persists to a SQLite file. Test / eval scripts import the
+// services directly (not this module) and leave SQLITE_PATH unset, so they run
+// against a fresh in-memory database. Bootstrapping here migrates and seeds.
+if (!process.env.SQLITE_PATH) {
+  process.env.SQLITE_PATH = resolve(config.dataDir, "scenic.sqlite");
+}
+getDb();
 
 const rootDir = resolve(fileURLToPath(new URL("../..", import.meta.url)));
-const publicDir = join(rootDir, "web", "public");
+const publicDir = join(rootDir, "web", "dist");
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -544,14 +553,19 @@ function requireAdmin(req, res) {
 }
 
 function serveStatic(res, pathname) {
-  const pageRoutes = new Set(["/", "/visitor", "/admin"]);
-  const requestedPath = pageRoutes.has(pathname) ? "/index.html" : pathname;
-  const safePath = normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
-  const filePath = join(publicDir, safePath);
+  const safePath = normalize(pathname === "/" ? "/index.html" : pathname).replace(/^(\.\.[/\\])+/, "");
+  let filePath = join(publicDir, safePath);
 
+  // SPA fallback: unknown routes without a file extension serve index.html so
+  // the Vue router can handle client-side navigation.
   if (!filePath.startsWith(publicDir) || !existsSync(filePath)) {
-    fail(res, 404, "NOT_FOUND", "Resource not found.");
-    return;
+    if (!extname(safePath)) {
+      filePath = join(publicDir, "index.html");
+    }
+    if (!existsSync(filePath)) {
+      fail(res, 404, "NOT_FOUND", "Resource not found.");
+      return;
+    }
   }
 
   const extension = extname(filePath);

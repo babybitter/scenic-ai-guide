@@ -1,30 +1,38 @@
+// P0-06: admin authentication (DB-backed accounts) and anonymous visitor
+// sessions. Tokens are stateless HMAC-signed payloads.
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { config } from "../config.mjs";
-
-const sessions = new Map();
+import { getDb } from "../db/database.mjs";
+import { verifyPassword } from "../db/password.mjs";
 
 export function login(username, password) {
-  if (username !== config.adminUsername || password !== config.adminPassword) {
+  const user = getDb()
+    .prepare("SELECT * FROM admin_users WHERE username = ? AND status = 'active'")
+    .get(String(username || ""));
+  if (!user || !verifyPassword(String(password || ""), user.password_hash)) {
     return null;
   }
 
   const token = signToken({
-    sub: username,
-    role: "admin",
+    sub: user.username,
+    uid: user.id,
+    role: user.role,
     exp: Date.now() + 1000 * 60 * 60 * 8
   });
 
   return {
     token,
     user: {
-      username,
-      role: "admin"
+      id: user.id,
+      username: user.username,
+      displayName: user.display_name,
+      role: user.role
     }
   };
 }
 
 export function verifyToken(token) {
-  const parts = token.split(".");
+  const parts = String(token || "").split(".");
   if (parts.length !== 2) {
     return null;
   }
@@ -45,18 +53,20 @@ export function verifyToken(token) {
 
 export function createVisitorSession() {
   const id = `visitor_${Date.now()}_${randomBytes(6).toString("hex")}`;
-  const session = {
-    id,
-    createdAt: new Date().toISOString(),
-    messageCount: 0
-  };
-
-  sessions.set(id, session);
-  return session;
+  const startedAt = new Date().toISOString();
+  getDb()
+    .prepare(
+      "INSERT INTO visitor_sessions (id, started_at, channel, message_count) VALUES (?, ?, 'web', 0)"
+    )
+    .run(id, startedAt);
+  return { id, createdAt: startedAt, messageCount: 0 };
 }
 
 export function getVisitorSession(id) {
-  return sessions.get(id) || null;
+  const row = getDb().prepare("SELECT * FROM visitor_sessions WHERE id = ?").get(id);
+  return row
+    ? { id: row.id, createdAt: row.started_at, messageCount: row.message_count }
+    : null;
 }
 
 function signToken(payload) {
