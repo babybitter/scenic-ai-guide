@@ -3,8 +3,9 @@
   <div class="dh-config">
     <ElCard shadow="never" class="hint-card">
       <p class="hint">
-        管理数字人的形象、音色与服务状态。启用的配置会实时下发到游客导览端；
-        形象 ID(avatar_id) 与音色(vcn) 需在讯飞交互平台申请后填入。
+        管理数字人的引擎、形象、音色与服务状态。启用的配置会实时下发到游客导览端，
+        首页随之切换。讯飞云端引擎的形象 ID(avatar_id) 与音色(vcn) 需在讯飞交互平台申请；
+        Live2D 本地引擎直接选择内置模型，作为讯飞的冗余备选，二者可随时切换。
       </p>
     </ElCard>
 
@@ -14,8 +15,19 @@
     </div>
 
     <ElTable :data="configs" v-loading="loading" border>
-      <ElTableColumn prop="name" label="名称" min-width="120" />
-      <ElTableColumn prop="avatarId" label="形象 ID" min-width="150" />
+      <ElTableColumn prop="name" label="名称" min-width="140" />
+      <ElTableColumn label="引擎" width="120">
+        <template #default="{ row }">
+          <ElTag :type="row.engine === 'live2d' ? 'warning' : 'primary'" effect="light">
+            {{ row.engine === 'live2d' ? 'Live2D 本地' : '讯飞云端' }}
+          </ElTag>
+        </template>
+      </ElTableColumn>
+      <ElTableColumn label="形象 / 模型" min-width="150">
+        <template #default="{ row }">
+          <span>{{ row.engine === 'live2d' ? row.modelId : row.avatarId }}</span>
+        </template>
+      </ElTableColumn>
       <ElTableColumn prop="vcn" label="音色 (vcn)" min-width="150" />
       <ElTableColumn label="服务状态" width="120">
         <template #default="{ row }">
@@ -44,10 +56,30 @@
         <ElFormItem label="名称" required>
           <ElInput v-model="form.name" placeholder="如：灵灵" />
         </ElFormItem>
-        <ElFormItem label="形象 ID">
+        <ElFormItem label="渲染引擎">
+          <ElRadioGroup v-model="form.engine">
+            <ElRadioButton value="xfyun">讯飞云端</ElRadioButton>
+            <ElRadioButton value="live2d">Live2D 本地</ElRadioButton>
+          </ElRadioGroup>
+          <p class="engine-hint">
+            {{
+              form.engine === 'live2d'
+                ? '本地 Live2D 画布渲染，声音由后端 TTS 合成，无需云端凭证；与讯飞互为冗余。'
+                : '讯飞交互平台云端流式数字人，需填写形象 ID 与音色。'
+            }}
+          </p>
+        </ElFormItem>
+        <!-- 讯飞：形象 ID -->
+        <ElFormItem v-if="form.engine === 'xfyun'" label="形象 ID">
           <ElInput v-model="form.avatarId" placeholder="讯飞交互平台形象 avatar_id" />
         </ElFormItem>
-        <ElFormItem label="音色 vcn">
+        <!-- Live2D：模型选择 -->
+        <ElFormItem v-else label="Live2D 模型">
+          <ElSelect v-model="form.modelId" placeholder="选择内置模型">
+            <ElOption v-for="m in live2dModels" :key="m.value" :label="m.label" :value="m.value" />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem :label="form.engine === 'live2d' ? '音色 vcn (TTS)' : '音色 vcn'">
           <ElInput v-model="form.vcn" placeholder="如：x5_lingxiaoyue_flow" />
         </ElFormItem>
         <ElFormItem label="欢迎语">
@@ -98,10 +130,21 @@
   const editing = ref(false)
   const saving = ref(false)
 
+  // 内置 Live2D 模型（与 public/live2d/characters 及后端目录名一致）；
+  // 性别仅供选择参考，两男两女，作为讯飞数字人的本地兜底形象。
+  const live2dModels = [
+    { value: 'Haru', label: '春 Haru（女）' },
+    { value: 'Hiyori', label: '日和 Hiyori（女）' },
+    { value: 'Kei', label: '圭 Kei（男）' },
+    { value: 'Hibiki', label: '响 Hibiki（男）' }
+  ]
+
   const emptyForm = () => ({
     id: '',
     name: '',
+    engine: 'xfyun' as DigitalHumanConfig['engine'],
     avatarId: '',
+    modelId: 'Haru',
     vcn: 'x5_lingxiaoyue_flow',
     welcomeText: '您好，我是灵山胜境 AI 导游，很高兴为您服务。',
     speechRate: 1,
@@ -139,7 +182,9 @@
     Object.assign(form, {
       id: row.id,
       name: row.name,
+      engine: row.engine || 'xfyun',
       avatarId: row.avatarId,
+      modelId: row.modelId || 'Haru',
       vcn: row.vcn,
       welcomeText: row.welcomeText,
       speechRate: row.speechRate || 1,
@@ -220,5 +265,12 @@
 
   .muted {
     color: var(--el-text-color-placeholder);
+  }
+
+  .engine-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--el-text-color-secondary);
   }
 </style>

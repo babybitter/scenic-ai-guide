@@ -42,7 +42,9 @@ export default ({ mode }: { mode: string }) => {
         '@icons': resolvePath('src/assets/icons'),
         '@utils': resolvePath('src/utils'),
         '@stores': resolvePath('src/store'),
-        '@styles': resolvePath('src/assets/styles')
+        '@styles': resolvePath('src/assets/styles'),
+        // Live2D 框架内部用 @framework 引用官方 Cubism SDK Framework 源码
+        '@framework': resolvePath('src/lib/live2d/Framework/src')
       }
     },
     build: {
