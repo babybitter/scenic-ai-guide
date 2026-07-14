@@ -257,6 +257,11 @@ function scoreTemplate(template, preferences) {
     score += Math.max(0, 50 - over / 3); // exceeds budget = steep penalty by overage
   }
 
+  // General time-based routes form the backbone for pure-duration requests;
+  // themed routes (photo / family / buddhist) win only when their interest is chosen.
+  const GENERAL_ROUTES = new Set(["quick_30", "one_hour_core", "classic_150", "culture_half_day"]);
+  if (GENERAL_ROUTES.has(template.id)) score += 25;
+
   if (/历史|文化|深度/.test(interestText) && template.tags.includes("history")) score += 45;
   if (/佛教|祈福|朝圣/.test(interestText) && template.tags.includes("buddhist")) score += 45;
   if (/自然|风光|太湖/.test(interestText) && template.tags.includes("nature")) score += 35;
