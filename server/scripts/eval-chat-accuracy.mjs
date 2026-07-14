@@ -135,7 +135,13 @@ function spotSatisfied(actualSpotNames, expectedSpotIds) {
     "LS-013": "灵山梵宫",
     "LS-014": "五印坛城",
     "LS-015": "曼飞龙塔",
-    "LS-016": "无尽意斋"
+    "LS-016": "无尽意斋",
+    "NH-001": "拈花广场",
+    "NH-002": "梵天花海",
+    "NH-003": "香月花街",
+    "NH-004": "拈花堂",
+    "NH-005": "五灯湖",
+    "NH-006": "鹿鸣谷"
   };
   const expectedNames = expectedSpotIds.map((id) => idToName[id] || id);
   return expectedNames.some((name) => actualSpotNames.includes(name));

@@ -354,10 +354,10 @@ function seedDigitalHumanCatalog(instance) {
 }
 
 function seedScenicSpots(instance) {
-  const count = instance.prepare("SELECT COUNT(*) AS n FROM scenic_spots").get().n;
-  if (count > 0) {
-    return;
-  }
+  // Idempotent, additive seed (INSERT OR IGNORE keyed by id): every boot syncs
+  // the generated catalogue so spots added later — e.g. the 拈花湾 sub-area —
+  // land in databases that were created before they existed, without touching
+  // rows an admin may have edited.
   const knowledge = loadKnowledge();
   const spots = knowledge?.spots || [];
   if (!spots.length) {

@@ -611,17 +611,16 @@
     "sourceBasis": "资料包未覆盖海底世界水族馆"
   },
   {
-    "id": "qa_048_out_scope_nianhuawan",
-    "category": "景区外问题",
-    "question": "拈花湾好玩吗？",
+    "id": "qa_048_nianhuawan_in_scope",
+    "category": "拈花湾子景区",
+    "question": "梵天花海有什么特色？",
     "mode": "qa",
-    "shouldAnswer": false,
-    "expectedScenario": "out_of_scope",
-    "expectedLabel": "拒答",
-    "expectedSpotIds": [],
-    "expectedAnswerTerms": [["灵山", "服务范围", "拈花湾"]],
-    "citationRequired": false,
-    "sourceBasis": "当前项目主景区为灵山胜境，拈花湾暂不纳入"
+    "shouldAnswer": true,
+    "expectedScenario": "grounded",
+    "expectedSpotIds": ["NH-002"],
+    "expectedAnswerTerms": [["花海", "花卉", "禅意", "观赏"]],
+    "citationRequired": true,
+    "sourceBasis": "拈花湾禅意小镇 NH-002 梵天花海，已作为子景区纳入知识库"
   },
   {
     "id": "qa_049_sensitive_investment",

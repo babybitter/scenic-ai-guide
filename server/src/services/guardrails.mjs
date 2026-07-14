@@ -26,10 +26,9 @@ const SENSITIVE_RULES = [
 ];
 
 // Other well-known scenic areas / cities that are explicitly out of scope.
+// 拈花湾禅意小镇 is IN scope (a sub-area of 灵山) — see IN_SCOPE_SIGNALS below.
 const OTHER_PLACES = [
-  "拈花湾",
   "鼋头渚",
-  "灵山小镇",
   "西湖",
   "故宫",
   "黄山",
@@ -44,8 +43,9 @@ const OTHER_PLACES = [
   "环球影城"
 ];
 
-// Signals that the question is actually about Lingshan (so mentioning another
-// place in a comparison still counts as in-scope).
+// Signals that the question is actually in scope — the 灵山 parent area plus
+// its 拈花湾禅意小镇 sub-area. Mentioning another place in a comparison still
+// counts as in-scope when one of these appears.
 const LINGSHAN_SIGNALS = [
   "灵山",
   "大佛",
@@ -56,7 +56,18 @@ const LINGSHAN_SIGNALS = [
   "胜境",
   "吉祥颂",
   "花开见佛",
-  "抱佛脚"
+  "抱佛脚",
+  // 拈花湾禅意小镇 sub-area
+  "拈花湾",
+  "拈花",
+  "禅意小镇",
+  "拈花广场",
+  "梵天花海",
+  "香月花街",
+  "拈花堂",
+  "五灯湖",
+  "鹿鸣谷",
+  "禅行"
 ];
 
 function normalize(value) {

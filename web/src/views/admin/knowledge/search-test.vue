@@ -29,7 +29,7 @@
 
           <div v-loading="searching" class="result-area">
             <ElEmpty v-if="!searchResults.length" description="暂无检索结果" />
-            <ElScrollbar v-else class="result-scroll">
+            <ElScrollbar v-else max-height="460px" class="result-scroll">
               <ElCard
                 v-for="(hit, i) in searchResults"
                 :key="hit.id || i"
@@ -183,8 +183,12 @@
     min-height: 200px;
   }
 
+  // 通过 ElScrollbar 的 max-height 属性约束内部滚动容器（.el-scrollbar__wrap），
+  // 仅用 CSS 设置根节点 max-height 会因内层 wrap 高度为 auto 而被裁剪、无法滚动。
   .result-scroll {
-    max-height: 460px;
+    :deep(.el-scrollbar__wrap) {
+      max-height: 460px;
+    }
   }
 
   .hit-card {

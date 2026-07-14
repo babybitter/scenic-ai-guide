@@ -40,11 +40,18 @@ await record("route mode returns numbered steps", async () => {
 });
 
 await record("out-of-scope redirects back to Lingshan", async () => {
-  const r = await answerQuestion({ question: "拈花湾好玩吗" });
+  const r = await answerQuestion({ question: "西湖好玩吗" });
   assert.equal(r.scenario, "out_of_scope", `scenario=${r.scenario}`);
   assert.equal(r.label, "拒答");
   assert.ok(r.answer.includes("灵山"), "should redirect to Lingshan");
   assert.equal(r.citations.length, 0, "refusal has no citations");
+});
+
+await record("拈花湾 sub-area is in scope and grounded", async () => {
+  const r = await answerQuestion({ question: "梵天花海有什么特色" });
+  assert.equal(r.scenario, "grounded", `scenario=${r.scenario}`);
+  assert.ok(r.citations.length > 0, "expected citations for 拈花湾 spot");
+  assert.ok(/花海|禅意|花卉/.test(r.answer), `answer should describe 梵天花海: ${r.answer}`);
 });
 
 await record("sensitive input is refused", async () => {
