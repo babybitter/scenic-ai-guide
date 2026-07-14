@@ -2,7 +2,31 @@
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background: var(--default-bg-color);
+
+  // 全局背景：左下角 → 右上角的淡青色对角渐变，过渡区间拉长、柔和不突兀，
+  // 叠加在原有底色之上，让所有页面共享同一层淡淡的禅意青色氛围。
+  background:
+    linear-gradient(
+      to top right,
+      rgb(19 81 88 / 10%) 0%,
+      rgb(19 81 88 / 6%) 30%,
+      rgb(19 81 88 / 2%) 58%,
+      rgb(19 81 88 / 0%) 82%
+    ),
+    var(--default-bg-color);
+
+  // 暗色模式下用更亮的青色做微光，避免在深色底上偏灰发脏
+  :global(.dark) & {
+    background:
+      linear-gradient(
+        to top right,
+        rgb(60 180 175 / 8%) 0%,
+        rgb(60 180 175 / 5%) 30%,
+        rgb(60 180 175 / 2%) 58%,
+        rgb(60 180 175 / 0%) 82%
+      ),
+      var(--default-bg-color);
+  }
 
   #app-sidebar {
     flex-shrink: 0;
