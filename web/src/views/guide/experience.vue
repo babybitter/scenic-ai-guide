@@ -116,10 +116,11 @@
           <div class="routes-body">
             <ElForm inline class="route-form">
               <ElFormItem label="游玩时长">
-                <ElSelect v-model="pref.durationMinutes" style="width: 130px">
+                <ElSelect v-model="pref.durationMinutes" style="width: 160px">
+                  <ElOption label="30 分钟核心打卡" :value="30" />
                   <ElOption label="1 小时速览" :value="60" />
                   <ElOption label="2-3 小时经典" :value="150" />
-                  <ElOption label="半日深度" :value="240" />
+                  <ElOption label="半日深度文化" :value="360" />
                 </ElSelect>
               </ElFormItem>
               <ElFormItem label="兴趣">

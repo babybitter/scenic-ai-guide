@@ -201,18 +201,44 @@ export async function narrateRouteNode({ nodeId, spotId, spotName, signal } = {}
   return generateSpotNarration({ spotId: node?.spotId || spotId, spotName: targetName, signal });
 }
 
+// Map front-end interest codes (and loose labels) to canonical Chinese terms so
+// scoring works regardless of whether the client sends "history" or "历史文化".
+const INTEREST_ALIAS = {
+  history: "历史文化",
+  culture: "历史文化",
+  buddhist: "佛教朝圣",
+  buddhism: "佛教朝圣",
+  pray: "佛教祈福",
+  parentchild: "亲子家庭",
+  family: "亲子家庭",
+  child: "亲子家庭",
+  photo: "拍照打卡",
+  nature: "自然风光",
+  show: "演艺体验",
+  performance: "演艺体验",
+  easy: "轻松游览",
+  deep: "深度讲解"
+};
+
+function normalizeInterest(item) {
+  const raw = String(item).trim();
+  return INTEREST_ALIAS[raw.toLowerCase()] || raw;
+}
+
 function normalizePreferences(input) {
-  const interests = Array.isArray(input.interests) ? input.interests : [];
+  const rawInterests = Array.isArray(input.interests) ? input.interests : [];
+  const interests = rawInterests.map(normalizeInterest).filter(Boolean);
+  const interestText = interests.join(" ");
   const durationMinutes = Number(input.durationMinutes || input.minutes || 150);
   return {
     durationMinutes,
-    interests: interests.map((item) => String(item).trim()).filter(Boolean),
+    interests,
     groupType: input.groupType || "",
     pace: input.pace || "normal",
     physicalLevel: input.physicalLevel || "normal",
-    wantsShow: Boolean(input.wantsShow),
-    photoFocus: Boolean(input.photoFocus),
-    withChildren: Boolean(input.withChildren) || interests.some((item) => /亲子|孩子|家庭/.test(item)),
+    wantsShow: Boolean(input.wantsShow) || /演艺|演出|表演/.test(interestText),
+    photoFocus: Boolean(input.photoFocus) || /拍照|打卡|合影/.test(interestText),
+    withChildren: Boolean(input.withChildren) || /亲子|孩子|家庭/.test(interestText),
     avoidStairs: Boolean(input.avoidStairs) || input.physicalLevel === "low"
   };
 }
@@ -221,11 +247,15 @@ function scoreTemplate(template, preferences) {
   let score = 0;
   const interestText = preferences.interests.join(" ");
 
-  if (preferences.durationMinutes < 45 && template.id === "quick_30") score += 100;
-  if (preferences.durationMinutes >= 45 && preferences.durationMinutes <= 90 && template.id === "one_hour_core") score += 90;
-  if (preferences.durationMinutes > 90 && preferences.durationMinutes <= 210 && template.id === "classic_150") score += 75;
-  if (preferences.durationMinutes > 210 && template.durationMinutes <= preferences.durationMinutes + 30) score += 35;
-  if (template.durationMinutes <= preferences.durationMinutes) score += 20;
+  // Duration fit (proximity): the template whose length best matches the
+  // requested time wins. Fitting within budget is preferred; overshooting the
+  // budget is penalized in proportion to the overage.
+  const over = template.durationMinutes - preferences.durationMinutes;
+  if (over <= 0) {
+    score += 70 + Math.max(0, 30 + over / 4); // within budget; closer to budget = better
+  } else {
+    score += Math.max(0, 50 - over / 3); // exceeds budget = steep penalty by overage
+  }
 
   if (/历史|文化|深度/.test(interestText) && template.tags.includes("history")) score += 45;
   if (/佛教|祈福|朝圣/.test(interestText) && template.tags.includes("buddhist")) score += 45;
@@ -234,7 +264,7 @@ function scoreTemplate(template, preferences) {
   if (preferences.photoFocus && template.tags.includes("photo")) score += 45;
   if ((preferences.photoFocus || /拍照|打卡|合影/.test(interestText)) && template.id === "photo_checkin") score += 30;
   if ((preferences.withChildren || /亲子|孩子|家庭/.test(interestText)) && template.tags.includes("family")) score += 60;
-  if (preferences.wantsShow && template.tags.includes("show")) score += 25;
+  if (preferences.wantsShow && template.tags.includes("show")) score += 40;
   if (preferences.avoidStairs && template.tags.includes("easy")) score += 30;
   if (preferences.avoidStairs && template.nodeIds.includes("buddha")) score -= 20;
 
