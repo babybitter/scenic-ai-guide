@@ -7,7 +7,7 @@
  */
 import { ref, shallowRef } from 'vue'
 // SDK 以预编译 ESM 形式提供，附带 index.d.ts 类型声明
-import AvatarPlatform, { SDKEvents } from '@/vm-sdk/avatar-sdk-web_3.1.1.1011/index.js'
+import AvatarPlatform, { SDKEvents, PlayerEvents } from '@/vm-sdk/avatar-sdk-web_3.1.1.1011/index.js'
 
 export type AvatarStatus = 'idle' | 'connecting' | 'ready' | 'speaking' | 'error'
 
@@ -37,6 +37,8 @@ function emotionCode(emotion?: string): number {
 export function useXfAvatar() {
   const status = ref<AvatarStatus>('idle')
   const errorMessage = ref('')
+  // 浏览器自动播放策略会拦截未经用户手势的音频：audioReady 为 false 时需用户手势解锁
+  const audioReady = ref(false)
   const platform = shallowRef<InstanceType<typeof AvatarPlatform> | null>(null)
 
   const env = import.meta.env
@@ -110,6 +112,24 @@ export function useXfAvatar() {
 
       await ap.start({ wrapper: options.wrapper as HTMLDivElement })
       status.value = 'ready'
+
+      // 监听播放器：音频被自动播放策略拦截时标记，需用户手势解锁
+      const player = ap.player
+      if (player) {
+        player.on?.(PlayerEvents.playing, () => {
+          if (!player.muted) audioReady.value = true
+        })
+        player.on?.(PlayerEvents.playNotAllowed, () => {
+          audioReady.value = false
+        })
+        // 尽力先解除静音（首帧前调用通常可生效，失败则等待用户手势）
+        try {
+          player.muted = false
+          player.volume = 1
+        } catch {
+          /* ignore */
+        }
+      }
       return true
     } catch (err) {
       status.value = 'error'
@@ -138,6 +158,20 @@ export function useXfAvatar() {
     }
   }
 
+  /** 在用户手势中调用以解锁音频（解除静音并恢复播放） */
+  async function enableAudio(): Promise<void> {
+    const player = platform.value?.player
+    if (!player) return
+    try {
+      player.muted = false
+      player.volume = 1
+      await player.resume?.()
+      audioReady.value = true
+    } catch {
+      /* 仍被拦截，等待下一次用户手势 */
+    }
+  }
+
   /** 打断当前播报 */
   async function interrupt(): Promise<void> {
     try {
@@ -158,7 +192,7 @@ export function useXfAvatar() {
     status.value = 'idle'
   }
 
-  return { status, errorMessage, hasCredentials, start, speak, interrupt, destroy }
+  return { status, errorMessage, audioReady, hasCredentials, start, speak, enableAudio, interrupt, destroy }
 }
 
 function normalizeError(err: unknown): string {

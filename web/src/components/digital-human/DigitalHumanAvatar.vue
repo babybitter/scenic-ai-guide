@@ -21,13 +21,18 @@
         <span class="dh-dot" :class="`dot-${avatar.status.value}`"></span>
         {{ statusText }}
       </div>
+
+      <!-- 音频解锁提示：浏览器拦截自动播放时，点击开启声音 -->
+      <div v-if="isStreaming && !avatar.audioReady.value" class="dh-audio-mask" @click="enableAudio">
+        <ElButton type="primary" round :icon="Microphone">点击开启数字人声音</ElButton>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-  import { Avatar } from '@element-plus/icons-vue'
+  import { Avatar, Microphone } from '@element-plus/icons-vue'
   import { useXfAvatar } from '@/composables/useXfAvatar'
   import { fetchActiveDigitalHuman, type DigitalHumanConfig } from '@/api/digital-human'
 
@@ -101,11 +106,16 @@
     return ok
   }
 
+  /** 在用户手势中解锁音频 */
+  function enableAudio() {
+    return avatar.enableAudio()
+  }
+
   function interrupt() {
     return avatar.interrupt()
   }
 
-  defineExpose({ speak, interrupt, status: avatar.status, config })
+  defineExpose({ speak, enableAudio, interrupt, status: avatar.status, audioReady: avatar.audioReady, config })
 
   onMounted(init)
   onBeforeUnmount(() => avatar.destroy())
@@ -163,6 +173,17 @@
     margin-top: 6px;
     font-size: 12px;
     color: rgb(255 255 255 / 65%);
+  }
+
+  .dh-audio-mask {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 24px;
+    cursor: pointer;
+    background: linear-gradient(to top, rgb(0 0 0 / 35%), transparent 40%);
   }
 
   .dh-badge {

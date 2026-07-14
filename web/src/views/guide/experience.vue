@@ -266,6 +266,8 @@
   async function ask(preset?: string) {
     const question = (preset ?? input.value).trim()
     if (!question || asking.value) return
+    // 在用户手势中解锁数字人音频（规避浏览器自动播放限制）
+    avatarRef.value?.enableAudio()
     input.value = ''
     messages.value.push({ role: 'user', content: question })
     scrollToBottom()
@@ -309,6 +311,7 @@
   }
 
   async function narrate(spot: ScenicSpot) {
+    avatarRef.value?.enableAudio()
     activeTab.value = 'chat'
     messages.value.push({ role: 'user', content: `请讲解 ${spot.name}` })
     scrollToBottom()
@@ -337,6 +340,7 @@
   }
 
   async function narrateNode(node: RouteNode) {
+    avatarRef.value?.enableAudio()
     activeTab.value = 'chat'
     statusTip.value = '正在讲解路线节点…'
     try {
