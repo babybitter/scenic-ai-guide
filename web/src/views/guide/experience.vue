@@ -84,8 +84,8 @@
             <!-- 情感快捷反馈 -->
             <div class="feedback-row">
               <span class="fb-label">本次讲解满意吗：</span>
-              <ElButton size="small" text @click="react('up', '开心')">👍 满意</ElButton>
-              <ElButton size="small" text @click="react('down', '失望')">👎 一般</ElButton>
+              <ElButton size="small" text type="success" @click="react('up', '开心')">满意</ElButton>
+              <ElButton size="small" text type="info" @click="react('down', '失望')">一般</ElButton>
               <ElRate v-model="rating" size="small" @change="onRate" />
             </div>
           </div>
