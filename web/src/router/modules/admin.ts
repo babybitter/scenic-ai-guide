@@ -67,6 +67,21 @@ export const analyticsRoutes: AppRouteRecord = {
   ]
 }
 
+export const systemRoutes: AppRouteRecord = {
+  name: 'System',
+  path: '/admin/system',
+  component: '/index/index',
+  meta: { title: '系统管理', icon: '&#xe7b9;', roles: ['R_SUPER'] },
+  children: [
+    {
+      path: 'users',
+      name: 'SystemUsers',
+      component: '/admin/system/users',
+      meta: { title: '用户管理', keepAlive: true }
+    }
+  ]
+}
+
 export const operationRoutes: AppRouteRecord = {
   name: 'Operation',
   path: '/admin/operation',

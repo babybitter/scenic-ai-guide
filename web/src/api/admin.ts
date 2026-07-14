@@ -185,3 +185,30 @@ export interface ServiceQualityReport {
 export function getServiceQualityReport() {
   return request.get<ServiceQualityReport>({ url: '/api/admin/service-quality/report' })
 }
+
+// ---- 系统用户管理（产品闭环）----
+export interface AdminUser {
+  id: string
+  username: string
+  displayName: string
+  role: 'admin' | 'operator'
+  status: 'active' | 'disabled'
+  createdAt?: string
+}
+export function getAdminUsers() {
+  return request.get<AdminUser[]>({ url: '/api/admin/users' })
+}
+export function createAdminUser2(data: {
+  username: string
+  password: string
+  displayName?: string
+  role?: string
+}) {
+  return request.post<AdminUser>({ url: '/api/admin/users', data })
+}
+export function updateAdminUser(id: string, data: Partial<AdminUser> & { password?: string }) {
+  return request.put<AdminUser>({ url: `/api/admin/users/${id}`, data })
+}
+export function deleteAdminUser(id: string) {
+  return request.del({ url: `/api/admin/users/${id}` })
+}

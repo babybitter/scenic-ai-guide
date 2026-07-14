@@ -36,6 +36,7 @@ import {
 } from "./services/serviceQuality.mjs";
 import { schema } from "./db/schema.mjs";
 import { getDb } from "./db/database.mjs";
+import { listAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser } from "./services/userAdmin.mjs";
 
 // The API server persists to a SQLite file. Test / eval scripts import the
 // services directly (not this module) and leave SQLITE_PATH unset, so they run
@@ -168,6 +169,34 @@ async function route(req, res, url) {
   if (scenicAdminMatch && req.method === "DELETE") {
     if (!requireAdmin(req, res)) return;
     ok(res, disableScenicSpot(decodeURIComponent(scenicAdminMatch[1])));
+    return;
+  }
+
+  // Admin user management (product closed-loop)
+  if (url.pathname === "/api/admin/users" && req.method === "GET") {
+    if (!requireAdmin(req, res)) return;
+    ok(res, listAdminUsers());
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users" && req.method === "POST") {
+    if (!requireAdmin(req, res)) return;
+    const body = await readJson(req);
+    created(res, createAdminUser(body));
+    return;
+  }
+
+  const userAdminMatch = url.pathname.match(/^\/api\/admin\/users\/([^/]+)$/);
+  if (userAdminMatch && req.method === "PUT") {
+    if (!requireAdmin(req, res)) return;
+    const body = await readJson(req);
+    ok(res, updateAdminUser(decodeURIComponent(userAdminMatch[1]), body));
+    return;
+  }
+
+  if (userAdminMatch && req.method === "DELETE") {
+    if (!requireAdmin(req, res)) return;
+    ok(res, deleteAdminUser(decodeURIComponent(userAdminMatch[1])));
     return;
   }
 
