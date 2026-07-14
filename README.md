@@ -1,7 +1,4 @@
-# Scenic AI Guide (景区导览服务 AI 数字人)
-
-An AI-powered digital-human tour guide for the Lingshan Scenic Area (无锡灵山胜境),
-built for the 15th "China Software Cup" competition (challenge A5).
+# Scenic AI Guide
 
 The system has two sides:
 
