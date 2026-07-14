@@ -489,8 +489,12 @@ async function route(req, res, url) {
     }
 
     ok(res, {
-      username: payload.sub,
-      role: payload.role
+      userId: payload.uid || payload.sub,
+      userName: payload.sub,
+      roles: [payload.role === "admin" ? "R_SUPER" : payload.role],
+      buttons: [],
+      email: "",
+      avatar: ""
     });
     return;
   }

@@ -1,25 +1,13 @@
 import request from '@/utils/http'
 import { AppRouteRecord } from '@/types/router'
 
-// 获取用户列表
-export function fetchGetUserList(params: Api.SystemManage.UserSearchParams) {
-  return request.get<Api.SystemManage.UserList>({
-    url: '/api/user/list',
-    params
-  })
-}
-
-// 获取角色列表
-export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
-  return request.get<Api.SystemManage.RoleList>({
-    url: '/api/role/list',
-    params
-  })
-}
-
-// 获取菜单列表
+/**
+ * 获取菜单列表（后端权限模式使用）。
+ * 本项目使用前端权限模式（VITE_ACCESS_MODE=frontend），菜单来自前端 asyncRoutes，
+ * 因此该接口默认不会被调用，这里保留一个后端模式下的占位实现。
+ */
 export function fetchGetMenuList() {
   return request.get<AppRouteRecord[]>({
-    url: '/api/v3/system/menus'
+    url: '/api/menu/list'
   })
 }

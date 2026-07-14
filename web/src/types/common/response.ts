@@ -19,12 +19,18 @@
  * @author Art Design Pro Team
  */
 
-/** 基础 API 响应结构 */
+/** 基础 API 响应结构（与 Node 后端统一信封一致） */
 export interface BaseResponse<T = unknown> {
-  /** 状态码 */
-  code: number
-  /** 消息 */
-  msg: string
+  /** 是否成功 */
+  success: boolean
   /** 数据 */
   data: T
+  /** 附加元信息（分页、耗时、提示语等） */
+  meta?: Record<string, unknown> & { message?: string }
+  /** 失败时的错误信息 */
+  error?: {
+    code: string
+    message: string
+    details?: unknown
+  }
 }

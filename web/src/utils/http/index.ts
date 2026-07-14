@@ -65,7 +65,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
-    if (accessToken) request.headers.set('Authorization', accessToken)
+    if (accessToken) request.headers.set('Authorization', `Bearer ${accessToken}`)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -80,17 +80,21 @@ axiosInstance.interceptors.request.use(
   }
 )
 
-/** 响应拦截器 */
+/** 响应拦截器
+ * 后端返回统一信封：成功 { success: true, data, meta }，失败 { success: false, error }
+ * 并使用标准 HTTP 状态码，因此非 2xx 会进入错误分支。
+ */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => {
-    const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
-    throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
+    if (response.data && response.data.success) return response
+    const message = response.data?.error?.message || $t('httpMsg.requestFailed')
+    throw createHttpError(message, response.status || ApiStatus.error)
   },
   (error) => {
-    if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
-    return Promise.reject(handleError(error))
+    const status = error.response?.status
+    const backendMessage = error.response?.data?.error?.message
+    if (status === ApiStatus.unauthorized) handleUnauthorizedError(backendMessage)
+    return Promise.reject(handleError(error, backendMessage))
   }
 )
 
@@ -178,8 +182,8 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
     const res = await axiosInstance.request<BaseResponse<T>>(config)
 
     // 显示成功消息
-    if (config.showSuccessMessage && res.data.msg) {
-      showSuccess(res.data.msg)
+    if (config.showSuccessMessage && res.data.meta?.message) {
+      showSuccess(res.data.meta.message)
     }
 
     return res.data.data as T

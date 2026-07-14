@@ -118,7 +118,7 @@ const getErrorMessage = (status: number): string => {
  * @param error 错误对象
  * @returns 错误对象
  */
-export function handleError(error: AxiosError<ErrorResponse>): never {
+export function handleError(error: AxiosError<ErrorResponse>, overrideMessage?: string): never {
   // 处理取消的请求
   if (error.code === 'ERR_CANCELED') {
     console.warn('Request cancelled:', error.message)
@@ -126,7 +126,7 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
   }
 
   const statusCode = error.response?.status
-  const errorMessage = error.response?.data?.msg || error.message
+  const errorMessage = overrideMessage || error.response?.data?.msg || error.message
   const requestConfig = error.config
 
   // 处理网络错误
@@ -137,10 +137,12 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
     })
   }
 
-  // 处理 HTTP 状态码错误
-  const message = statusCode
-    ? getErrorMessage(statusCode)
-    : errorMessage || $t('httpMsg.requestFailed')
+  // 处理 HTTP 状态码错误：优先使用后端返回的业务错误信息
+  const message = overrideMessage
+    ? overrideMessage
+    : statusCode
+      ? getErrorMessage(statusCode)
+      : errorMessage || $t('httpMsg.requestFailed')
   throw new HttpError(message, statusCode || ApiStatus.error, {
     data: error.response.data,
     url: requestConfig?.url,
