@@ -16,6 +16,9 @@
 // 路由切换动画
 @use './core/router-transition';
 
+// 交互微动效（按钮/卡片/表格/菜单等的细腻反馈）
+@use './core/interactions';
+
 // 主题切换过渡优化
 @use './core/theme-change.scss';
 

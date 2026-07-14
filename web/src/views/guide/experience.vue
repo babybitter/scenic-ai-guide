@@ -6,7 +6,7 @@
   <div class="guide-page">
     <!-- 左：数字人展示区 -->
     <section class="dh-column">
-      <div class="dh-box">
+      <div class="dh-box" :class="{ 'is-active': asking }">
         <DigitalHumanAvatar ref="avatarRef" @ready="onAvatarReady" @error="onAvatarError" />
       </div>
       <div class="dh-caption">
@@ -25,23 +25,28 @@
               <div v-if="!messages.length" class="chat-empty">
                 <ElEmpty description="向 AI 导游提问吧，例如“灵山大佛多高”" />
               </div>
-              <div
-                v-for="(m, i) in messages"
-                :key="i"
-                class="msg-row"
-                :class="m.role"
-              >
-                <div class="bubble">
-                  <p class="bubble-text">{{ m.content }}</p>
-                  <div v-if="m.role === 'assistant' && m.meta" class="bubble-meta">
-                    <ElTag v-if="m.meta.label" size="small" type="info" effect="plain">{{ m.meta.label }}</ElTag>
-                    <span v-if="m.meta.latency" class="latency">响应 {{ m.meta.latency }}ms</span>
-                    <span v-if="m.meta.sources?.length" class="sources">
-                      来源：{{ m.meta.sources.map((s) => s.sectionTitle || s.documentName).filter(Boolean).join('、') }}
-                    </span>
+              <TransitionGroup name="msg" tag="div">
+                <div v-for="(m, i) in messages" :key="i" class="msg-row" :class="m.role">
+                  <div class="bubble">
+                    <p class="bubble-text">{{ m.content }}</p>
+                    <div v-if="m.role === 'assistant' && m.meta" class="bubble-meta">
+                      <ElTag v-if="m.meta.label" size="small" type="info" effect="plain">{{ m.meta.label }}</ElTag>
+                      <span v-if="m.meta.latency" class="latency">响应 {{ m.meta.latency }}ms</span>
+                      <span v-if="m.meta.sources?.length" class="sources">
+                        来源：{{ m.meta.sources.map((s) => s.sectionTitle || s.documentName).filter(Boolean).join('、') }}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </TransitionGroup>
+              <!-- 生成中：三点呼吸指示，比纯文字更有"正在思考"的临场感 -->
+              <Transition name="msg">
+                <div v-if="asking" class="msg-row assistant">
+                  <div class="bubble thinking">
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                  </div>
+                </div>
+              </Transition>
             </ElScrollbar>
 
             <!-- 快捷问题 -->
@@ -94,7 +99,7 @@
         <!-- 景点 -->
         <ElTabPane label="景点讲解" name="spots">
           <ElScrollbar class="spots-body" v-loading="spotsLoading">
-            <div class="spot-grid">
+            <div class="spot-grid stagger-in">
               <ElCard
                 v-for="spot in spots"
                 :key="spot.id"
@@ -447,8 +452,29 @@
   }
 
   .dh-box {
+    position: relative;
     flex: 1;
     min-height: 0;
+    border-radius: 12px;
+    transition: box-shadow 0.4s ease;
+  }
+
+  // 生成回答时，数字人展区透出柔和的金色呼吸光晕，暗示"正在准备讲解"
+  @media (prefers-reduced-motion: no-preference) {
+    .dh-box.is-active {
+      animation: dh-breathe 1.8s ease-in-out infinite;
+    }
+
+    @keyframes dh-breathe {
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgb(212 175 55 / 0%);
+      }
+
+      50% {
+        box-shadow: 0 0 22px 2px rgb(212 175 55 / 35%);
+      }
+    }
   }
 
   .dh-caption {
@@ -613,6 +639,114 @@
   .node-name {
     margin-right: 8px;
     font-weight: 500;
+  }
+
+  // —— 消息气泡进场：用户消息从右侧、AI 消息从左侧轻推浮现 ——
+  @media (prefers-reduced-motion: no-preference) {
+    .msg-enter-active {
+      transition:
+        opacity 0.32s ease,
+        transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .msg-enter-from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+
+    .msg-row.user.msg-enter-from {
+      transform: translateY(6px) translateX(12px);
+    }
+
+    .msg-row.assistant.msg-enter-from {
+      transform: translateY(6px) translateX(-12px);
+    }
+
+    // 气泡悬停轻微抬起，暗示可交互/可读性
+    .bubble {
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .msg-row:hover .bubble {
+      box-shadow: 0 3px 10px rgb(0 0 0 / 10%);
+    }
+  }
+
+  // —— "正在思考"三点动画 ——
+  .bubble.thinking {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    padding: 12px 14px;
+  }
+
+  .bubble.thinking .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--el-color-primary);
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: think-bounce 1.2s infinite ease-in-out;
+  }
+
+  .bubble.thinking .dot:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+
+  .bubble.thinking .dot:nth-child(3) {
+    animation-delay: 0.32s;
+  }
+
+  @keyframes think-bounce {
+    0%,
+    80%,
+    100% {
+      opacity: 0.35;
+      transform: translateY(0);
+    }
+
+    40% {
+      opacity: 1;
+      transform: translateY(-5px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bubble.thinking .dot {
+      animation: none;
+    }
+  }
+
+  // —— 景点卡片：悬停时左侧透出金色文化色条，呼应灵山主题 ——
+  .spot-card {
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, #d4af37, #1c6b6b);
+      content: '';
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    &:hover::before {
+      opacity: 1;
+    }
+  }
+
+  // 快捷问题按钮：悬停时描边点亮
+  .quick-row .el-button {
+    transition:
+      transform 0.18s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
   }
 
   @media (max-width: 900px) {

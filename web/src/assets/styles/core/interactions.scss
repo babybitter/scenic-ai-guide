@@ -1,0 +1,110 @@
+// 交互微动效（游客端 + 后台管理页通用）。
+//
+// 目标：细腻、克制、有"手工打磨"的质感，而不是一眼看上去像默认模板/AI 生成。
+// 只用 transform / opacity / box-shadow / color 过渡（GPU 友好，不触发重排），
+// 不改变任何交互逻辑与布局尺寸。所有动效在用户开启"减少动态效果"时自动关闭。
+
+@media (prefers-reduced-motion: no-preference) {
+  // —— 按钮：悬停轻微上浮 + 阴影，按下回落，形成有反馈的手感 ——
+  .el-button {
+    transition:
+      transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+
+    &:not(.is-disabled):not(.is-text):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+    }
+
+    &:not(.is-disabled):active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+  }
+
+  // 文本按钮不上浮，只做颜色过渡，避免跳动
+  .el-button.is-text:not(.is-disabled):hover {
+    transform: none;
+  }
+
+  // —— 卡片：悬停上浮，阴影加深，边缘透出主题色 ——
+  .el-card {
+    transition:
+      transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1),
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .el-card.is-hover-shadow:hover,
+  .el-card.is-always-shadow:hover {
+    transform: translateY(-3px);
+  }
+
+  // —— 表格行：悬停平滑着色 ——
+  .el-table__row {
+    transition: background-color 0.2s ease;
+  }
+
+  // —— 标签 / 徽标：入场轻微缩放，出现更自然 ——
+  .el-tag {
+    transition:
+      transform 0.18s ease,
+      background-color 0.2s ease;
+  }
+
+  // —— 侧边菜单项：悬停时文字/图标微微右移，指向感更强 ——
+  .el-menu-item,
+  .el-sub-menu__title {
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      padding-left 0.2s ease;
+  }
+
+  // —— 输入框：聚焦时阴影柔和扩散 ——
+  .el-input__wrapper,
+  .el-textarea__inner {
+    transition:
+      box-shadow 0.25s ease,
+      border-color 0.2s ease;
+  }
+
+  // —— 开关 / 单选按钮组：状态切换更顺滑 ——
+  .el-switch__core,
+  .el-radio-button__inner {
+    transition: all 0.22s ease;
+  }
+
+  // —— 标签页下划线滑动（Element Plus 默认已有，这里统一缓动手感）——
+  .el-tabs__active-bar {
+    transition: transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1), width 0.28s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+}
+
+// 通用列表入场动画：给需要的容器加 .stagger-in，子项依次浮现
+@media (prefers-reduced-motion: no-preference) {
+  .stagger-in > * {
+    animation: stagger-rise 0.4s both;
+  }
+
+  @for $i from 1 through 12 {
+    .stagger-in > *:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.04}s;
+    }
+  }
+
+  @keyframes stagger-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
