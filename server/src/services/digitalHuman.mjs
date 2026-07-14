@@ -8,8 +8,12 @@ function toConfig(row) {
   const config = {
     id: row.id,
     name: row.name,
+    // Rendering engine: 'xfyun' (iFlytek cloud stream) or 'live2d' (local canvas).
+    engine: row.engine === "live2d" ? "live2d" : "xfyun",
     avatarId: row.avatar_id || "",
     vcn: row.vcn || "",
+    // Live2D character folder name (only meaningful when engine === 'live2d').
+    modelId: row.model_id || "",
     characterAsset: row.character_asset || "",
     appearance: row.appearance || "",
     outfit: row.outfit || "",
@@ -22,13 +26,22 @@ function toConfig(row) {
     enabled: Boolean(row.enabled),
     updatedAt: row.updated_at
   };
-  // The iFlytek avatar streams from the cloud, so there is no local asset file
-  // to check; the client only needs a valid avatarId to render, and text-only
-  // service mode disables the avatar on purpose.
-  config.assetAvailable = Boolean(config.avatarId) && config.serviceStatus !== "text_only";
-  config.fallback = config.assetAvailable
-    ? { type: "xfyun-avatar", reason: "iFlytek interactive avatar is streamed from the cloud." }
-    : { type: "text_only", reason: "Avatar disabled; visitor client should degrade to text + audio." };
+  // Whether the visitor client can render this avatar at all. The iFlytek avatar
+  // streams from the cloud (needs a valid avatarId); the Live2D avatar renders a
+  // local canvas (needs a model_id). Text-only service mode disables both on
+  // purpose. When the active engine can't render, the client degrades to text —
+  // and an admin can switch to the other engine as a redundancy path.
+  if (config.engine === "live2d") {
+    config.assetAvailable = Boolean(config.modelId) && config.serviceStatus !== "text_only";
+    config.fallback = config.assetAvailable
+      ? { type: "live2d", reason: "Local Live2D canvas avatar; audio comes from backend TTS." }
+      : { type: "text_only", reason: "Avatar disabled; visitor client should degrade to text + audio." };
+  } else {
+    config.assetAvailable = Boolean(config.avatarId) && config.serviceStatus !== "text_only";
+    config.fallback = config.assetAvailable
+      ? { type: "xfyun-avatar", reason: "iFlytek interactive avatar is streamed from the cloud." }
+      : { type: "text_only", reason: "Avatar disabled; visitor client should degrade to text + audio." };
+  }
   return config;
 }
 
@@ -62,8 +75,10 @@ export function updateDigitalHumanConfig(input = {}) {
   const next = {
     id,
     name: stringOr(input.name, base.name),
+    engine: normalizeEngine(input.engine || base.engine),
     avatar_id: stringOr(input.avatarId, base.avatarId),
     vcn: stringOr(input.vcn, base.vcn),
+    model_id: stringOr(input.modelId, base.modelId),
     character_asset: stringOr(input.characterAsset, base.characterAsset),
     appearance: stringOr(input.appearance, base.appearance),
     outfit: stringOr(input.outfit, base.outfit),
@@ -79,16 +94,17 @@ export function updateDigitalHumanConfig(input = {}) {
 
   db.prepare(
     `INSERT INTO digital_human_configs
-       (id, name, avatar_id, vcn, character_asset, appearance, outfit, theme, voice_id,
+       (id, name, engine, avatar_id, vcn, model_id, character_asset, appearance, outfit, theme, voice_id,
         speech_rate, welcome_text, emotion_style, service_status, enabled, updated_at)
      VALUES
-       (@id, @name, @avatar_id, @vcn, @character_asset, @appearance, @outfit, @theme, @voice_id,
+       (@id, @name, @engine, @avatar_id, @vcn, @model_id, @character_asset, @appearance, @outfit, @theme, @voice_id,
         @speech_rate, @welcome_text, @emotion_style, @service_status, @enabled, @updated_at)
      ON CONFLICT(id) DO UPDATE SET
-       name = @name, avatar_id = @avatar_id, vcn = @vcn, character_asset = @character_asset,
-       appearance = @appearance, outfit = @outfit, theme = @theme, voice_id = @voice_id,
-       speech_rate = @speech_rate, welcome_text = @welcome_text, emotion_style = @emotion_style,
-       service_status = @service_status, enabled = @enabled, updated_at = @updated_at`
+       name = @name, engine = @engine, avatar_id = @avatar_id, vcn = @vcn, model_id = @model_id,
+       character_asset = @character_asset, appearance = @appearance, outfit = @outfit, theme = @theme,
+       voice_id = @voice_id, speech_rate = @speech_rate, welcome_text = @welcome_text,
+       emotion_style = @emotion_style, service_status = @service_status, enabled = @enabled,
+       updated_at = @updated_at`
   ).run(next);
 
   return toConfig(db.prepare("SELECT * FROM digital_human_configs WHERE id = ?").get(id));
@@ -121,9 +137,17 @@ export function mapAnswerToDigitalHumanState({ label = "", emotion = "", scenari
 
 export function preloadDigitalHumanAssets() {
   const active = getActiveDigitalHumanConfig();
+  // "ok" means an avatar identifier is configured for the active engine
+  // (avatarId for iFlytek, modelId for Live2D). Text-only service mode still
+  // reports ok=true here; whether the client actually renders is decided by
+  // assetAvailable on the config itself.
+  const hasIdentifier =
+    active?.engine === "live2d" ? Boolean(active?.modelId) : Boolean(active?.avatarId);
   return {
-    ok: Boolean(active?.avatarId),
+    ok: hasIdentifier,
+    engine: active?.engine || "xfyun",
     avatarId: active?.avatarId || "",
+    modelId: active?.modelId || "",
     vcn: active?.vcn || "",
     fallback: active?.fallback,
     warmedAt: new Date().toISOString()
@@ -142,4 +166,8 @@ function numberOr(value, fallback) {
 
 function normalizeServiceStatus(value) {
   return ["online", "maintenance", "text_only"].includes(value) ? value : "online";
+}
+
+function normalizeEngine(value) {
+  return value === "live2d" ? "live2d" : "xfyun";
 }

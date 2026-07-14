@@ -79,8 +79,15 @@ CREATE TABLE IF NOT EXISTS scenic_spots (
 CREATE TABLE IF NOT EXISTS digital_human_configs (
   id TEXT PRIMARY KEY,
   name TEXT,
+  -- engine: which rendering engine drives this avatar.
+  --   'xfyun'  -> iFlytek cloud streaming avatar (uses avatar_id + vcn)
+  --   'live2d' -> local Live2D canvas (uses model_id), a redundancy/fallback path
+  -- Whichever config is enabled decides what the visitor page renders.
+  engine TEXT NOT NULL DEFAULT 'xfyun',
   avatar_id TEXT,
   vcn TEXT,
+  -- model_id: Live2D character folder name (only used when engine = 'live2d')
+  model_id TEXT,
   character_asset TEXT,
   appearance TEXT,
   outfit TEXT,
@@ -182,7 +189,28 @@ export function getDb() {
 
 export function migrate(instance = getDb()) {
   instance.exec(DDL);
+  addMissingColumns(instance);
   return instance;
+}
+
+// Lightweight additive migration: CREATE TABLE IF NOT EXISTS never alters an
+// existing table, so databases created before a column was added need the new
+// columns back-filled. Each entry is applied only when the column is absent.
+function addMissingColumns(instance) {
+  const additions = {
+    digital_human_configs: [
+      { name: "engine", ddl: "engine TEXT NOT NULL DEFAULT 'xfyun'" },
+      { name: "model_id", ddl: "model_id TEXT" }
+    ]
+  };
+  for (const [table, columns] of Object.entries(additions)) {
+    const existing = new Set(instance.pragma(`table_info(${table})`).map((c) => c.name));
+    for (const column of columns) {
+      if (!existing.has(column.name)) {
+        instance.exec(`ALTER TABLE ${table} ADD COLUMN ${column.ddl}`);
+      }
+    }
+  }
 }
 
 // Seed only the small reference rows the product needs to boot (default digital
@@ -191,6 +219,7 @@ export function migrate(instance = getDb()) {
 export function seedReferenceData(instance = getDb()) {
   seedAdminUser(instance);
   seedDigitalHuman(instance);
+  seedDigitalHumanCatalog(instance);
   seedScenicSpots(instance);
   return instance;
 }
@@ -224,17 +253,19 @@ function seedDigitalHuman(instance) {
   instance
     .prepare(
       `INSERT INTO digital_human_configs
-        (id, name, avatar_id, vcn, character_asset, appearance, outfit, theme, voice_id,
+        (id, name, engine, avatar_id, vcn, model_id, character_asset, appearance, outfit, theme, voice_id,
          speech_rate, welcome_text, emotion_style, service_status, enabled, updated_at)
        VALUES
-        (@id, @name, @avatar_id, @vcn, @character_asset, @appearance, @outfit, @theme, @voice_id,
+        (@id, @name, @engine, @avatar_id, @vcn, @model_id, @character_asset, @appearance, @outfit, @theme, @voice_id,
          @speech_rate, @welcome_text, @emotion_style, @service_status, @enabled, @updated_at)`
     )
     .run({
       id: "dh_default_lingshan",
       name: "灵灵",
+      engine: "xfyun",
       avatar_id: process.env.DEFAULT_AVATAR_ID || "cnr5dg8n2000000003",
       vcn: process.env.DEFAULT_AVATAR_VCN || "x5_lingxiaoyue_flow",
+      model_id: "",
       character_asset: "",
       appearance: "xfyun-interactive-avatar",
       outfit: "guide-uniform",
@@ -248,6 +279,78 @@ function seedDigitalHuman(instance) {
       enabled: 1,
       updated_at: new Date().toISOString()
     });
+}
+
+// Catalog of ready-to-use avatars. Unlike seedDigitalHuman (which only runs on
+// an empty table), these rows are upserted idempotently by fixed id via
+// INSERT OR IGNORE, so they also appear in databases that were created earlier.
+// None of them are enabled by default — an admin picks one in the console.
+//
+// Two engines coexist here for redundancy: if the iFlytek cloud avatars are
+// unavailable, an admin can switch the visitor page to a local Live2D model
+// (and vice-versa). The 4 Live2D characters below are chosen from the bundled
+// free model set — 2 male-presenting (Kei, Hibiki) and 2 female-presenting
+// (Haru, Hiyori); gender labels are approximate and only guide selection.
+function seedDigitalHumanCatalog(instance) {
+  const now = new Date().toISOString();
+  const baseXfyun = {
+    engine: "xfyun",
+    model_id: "",
+    character_asset: "",
+    appearance: "xfyun-interactive-avatar",
+    outfit: "guide-uniform",
+    theme: "lingshan-teal-gold",
+    speech_rate: 1,
+    welcome_text: "您好，我是灵山胜境 AI 导游，很高兴为您服务。",
+    emotion_style: "warm",
+    service_status: "online",
+    enabled: 0,
+    updated_at: now
+  };
+  const baseLive2d = {
+    engine: "live2d",
+    avatar_id: "",
+    outfit: "",
+    theme: "lingshan-teal-gold",
+    character_asset: "",
+    appearance: "live2d-canvas",
+    speech_rate: 1,
+    welcome_text: "您好，我是灵山胜境 AI 导游，很高兴为您服务。",
+    emotion_style: "warm",
+    service_status: "online",
+    enabled: 0,
+    updated_at: now
+  };
+
+  const catalog = [
+    // iFlytek cloud avatars (name, vcn, avatar_id) supplied for this deployment.
+    { ...baseXfyun, id: "dh_xf_zhanting_male", name: "展厅接待男声", vcn: "x6_zhantingnanjiedai_pro", avatar_id: "cnr5dg8n2000000003", voice_id: "x6_zhantingnanjiedai_pro" },
+    { ...baseXfyun, id: "dh_xf_zhanting_female", name: "展厅接待女声", vcn: "x6_zhantingnvjiedai_pro", avatar_id: "cnrfb86h2000000004", voice_id: "x6_zhantingnvjiedai_pro" },
+    { ...baseXfyun, id: "dh_xf_shangwu_yinyu", name: "商务殷语", vcn: "x6_xiangruiyingyu_pro", avatar_id: "cnr5dg8n2000000003", voice_id: "x6_xiangruiyingyu_pro" },
+    // Same voice, two different avatar images -> kept as two rows, names disambiguated.
+    { ...baseXfyun, id: "dh_xf_daolan_female_a", name: "景区导览女声（形象一）", vcn: "x6_jingqudaolannvsheng_mini", avatar_id: "cnrmkf0e2000000006", voice_id: "x6_jingqudaolannvsheng_mini" },
+    { ...baseXfyun, id: "dh_xf_daolan_female_b", name: "景区导览女声（形象二）", vcn: "x6_jingqudaolannvsheng_mini", avatar_id: "cnrn9jgi2000000005", voice_id: "x6_jingqudaolannvsheng_mini" },
+    // Local Live2D fallback avatars (name, model_id = character folder, vcn = TTS voice for lip-sync audio).
+    { ...baseLive2d, id: "dh_l2d_haru", name: "Live2D · 春（女声）", model_id: "Haru", vcn: "x5_lingxiaoyue_flow", voice_id: "guide_female" },
+    { ...baseLive2d, id: "dh_l2d_hiyori", name: "Live2D · 日和（女声）", model_id: "Hiyori", vcn: "x5_lingxiaoyue_flow", voice_id: "guide_female" },
+    { ...baseLive2d, id: "dh_l2d_kei", name: "Live2D · 圭（男声）", model_id: "Kei", vcn: "x4_pengfei", voice_id: "guide_male" },
+    { ...baseLive2d, id: "dh_l2d_hibiki", name: "Live2D · 响（男声）", model_id: "Hibiki", vcn: "x4_pengfei", voice_id: "guide_male" }
+  ];
+
+  const insert = instance.prepare(
+    `INSERT OR IGNORE INTO digital_human_configs
+       (id, name, engine, avatar_id, vcn, model_id, character_asset, appearance, outfit, theme, voice_id,
+        speech_rate, welcome_text, emotion_style, service_status, enabled, updated_at)
+     VALUES
+       (@id, @name, @engine, @avatar_id, @vcn, @model_id, @character_asset, @appearance, @outfit, @theme, @voice_id,
+        @speech_rate, @welcome_text, @emotion_style, @service_status, @enabled, @updated_at)`
+  );
+  const tx = instance.transaction((rows) => {
+    for (const row of rows) {
+      insert.run({ avatar_id: "", model_id: "", ...row });
+    }
+  });
+  tx(catalog);
 }
 
 function seedScenicSpots(instance) {
