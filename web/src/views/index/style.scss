@@ -39,6 +39,7 @@
     min-width: 0;
     height: 100vh;
     overflow: auto;
+    background: var(--default-bg-color) url('/images/page-bg.webp') center / cover no-repeat;
 
     #app-header {
       position: sticky;
