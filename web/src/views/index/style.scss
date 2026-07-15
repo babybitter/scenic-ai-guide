@@ -97,7 +97,7 @@
     }
   }
 
-  :global(.dark) & #app-main {
+  &.is-dark #app-main {
     &::before {
       opacity: 0;
     }

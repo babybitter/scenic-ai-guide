@@ -1,6 +1,6 @@
 <!-- 布局容器 -->
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'is-dark': isDark }">
     <aside id="app-sidebar">
       <ArtSidebarMenu />
     </aside>
@@ -21,7 +21,11 @@
 </template>
 
 <script setup lang="ts">
+  import { useSettingStore } from '@/store/modules/setting'
+
   defineOptions({ name: 'AppLayout' })
+
+  const { isDark } = storeToRefs(useSettingStore())
 </script>
 
 <style lang="scss" scoped>
