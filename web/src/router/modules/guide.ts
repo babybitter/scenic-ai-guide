@@ -9,8 +9,8 @@ export const guideRoutes: AppRouteRecord = {
   path: '/guide',
   component: '/index/index',
   meta: {
-    title: '游客导览',
-    icon: '&#xe6e1;'
+    title: 'app.navGuide',
+    icon: 'ri:guide-line'
   },
   children: [
     {
@@ -18,8 +18,8 @@ export const guideRoutes: AppRouteRecord = {
       name: 'GuideExperience',
       component: '/guide/experience',
       meta: {
-        title: 'AI 数字人导览',
-        icon: '&#xe73e;',
+        title: 'app.navGuideExperience',
+        icon: 'ri:robot-2-line',
         keepAlive: false,
         fixedTab: true
       }
