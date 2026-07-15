@@ -33,13 +33,38 @@
   }
 
   #app-main {
+    position: relative;
     display: flex;
     flex: 1;
     flex-direction: column;
     min-width: 0;
     height: 100vh;
     overflow: auto;
-    background: var(--default-bg-color) url('/images/page-bg.webp') center / cover no-repeat;
+    background: var(--default-bg-color);
+    isolation: isolate;
+
+    &::before,
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      content: '';
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+      transition: opacity 0.6s ease-in-out;
+    }
+
+    &::before {
+      background-image: url('/images/page-bg.webp');
+      opacity: 1;
+    }
+
+    &::after {
+      background-image: url('/images/page-bg-dark.webp');
+      opacity: 0;
+    }
 
     #app-header {
       position: sticky;
@@ -50,6 +75,8 @@
     }
 
     #app-content {
+      position: relative;
+      z-index: 1;
       flex: 1;
 
       :deep(.layout-content) {
@@ -67,6 +94,25 @@
           border-radius: calc(var(--custom-radius) / 2 + 2px) !important;
         }
       }
+    }
+  }
+
+  :global(.dark) #app-main {
+    &::before {
+      opacity: 0;
+    }
+
+    &::after {
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-layout #app-main {
+    &::before,
+    &::after {
+      transition: none;
     }
   }
 }
