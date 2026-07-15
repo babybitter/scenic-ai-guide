@@ -13,7 +13,7 @@
       <div v-if="!loaded" key="loading" class="dh-loading">
         <div class="dh-loading-inner">
           <span class="dh-spinner"></span>
-          <p>数字人接入中…</p>
+          <p>{{ $t('app.guideConnecting') }}</p>
         </div>
       </div>
 
@@ -26,7 +26,14 @@
         @error="onError"
       />
 
-      <XfAvatar v-else key="xfyun" ref="childRef" :config="config" @ready="onReady" @error="onError" />
+      <XfAvatar
+        v-else
+        key="xfyun"
+        ref="childRef"
+        :config="config"
+        @ready="onReady"
+        @error="onError"
+      />
     </Transition>
   </div>
 </template>

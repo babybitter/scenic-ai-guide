@@ -2,11 +2,11 @@
  * 国际化配置
  *
  * 基于 vue-i18n 实现的多语言国际化解决方案。
- * 支持中文和英文切换，自动从本地存储恢复用户的语言偏好。
+ * 支持简体中文、英文、韩文、繁体中文和日文切换，自动从本地存储恢复用户的语言偏好。
  *
  * ## 主要功能
  *
- * - 多语言支持 - 支持中文（简体）和英文两种语言
+ * - 多语言支持 - 支持五种界面语言
  * - 语言切换 - 运行时动态切换语言，无需刷新页面
  * - 持久化存储 - 自动保存和恢复用户的语言偏好
  * - 全局注入 - 在任何组件中都可以使用 $t 函数进行翻译
@@ -26,6 +26,8 @@ import type { I18n, I18nOptions } from 'vue-i18n'
 import { LanguageEnum } from '@/enums/appEnum'
 import { getSystemStorage } from '@/utils/storage'
 import { StorageKeyManager } from '@/utils/storage/storage-key-manager'
+import { appMessages } from './app-messages'
+import { frameworkMessages } from './framework-messages'
 
 // 同步导入语言文件
 import enMessages from './langs/en.json'
@@ -39,9 +41,35 @@ const storageKeyManager = new StorageKeyManager()
 /**
  * 语言消息对象
  */
+function mergeMessages(
+  base: Record<string, any>,
+  override: Record<string, any>
+): Record<string, any> {
+  const merged = { ...base }
+  Object.entries(override).forEach(([key, value]) => {
+    merged[key] =
+      value && typeof value === 'object' && !Array.isArray(value)
+        ? mergeMessages((base[key] as Record<string, any>) || {}, value as Record<string, any>)
+        : value
+  })
+  return merged
+}
+
 const messages = {
-  [LanguageEnum.EN]: enMessages,
-  [LanguageEnum.ZH]: zhMessages
+  [LanguageEnum.EN]: { ...enMessages, app: appMessages[LanguageEnum.EN] },
+  [LanguageEnum.ZH]: { ...zhMessages, app: appMessages[LanguageEnum.ZH] },
+  [LanguageEnum.KO]: mergeMessages(enMessages, {
+    ...frameworkMessages[LanguageEnum.KO],
+    app: appMessages[LanguageEnum.KO]
+  }),
+  [LanguageEnum.ZH_TW]: mergeMessages(zhMessages, {
+    ...frameworkMessages[LanguageEnum.ZH_TW],
+    app: appMessages[LanguageEnum.ZH_TW]
+  }),
+  [LanguageEnum.JA]: mergeMessages(enMessages, {
+    ...frameworkMessages[LanguageEnum.JA],
+    app: appMessages[LanguageEnum.JA]
+  })
 }
 
 /**
@@ -50,7 +78,10 @@ const messages = {
  */
 export const languageOptions = [
   { value: LanguageEnum.ZH, label: '简体中文' },
-  { value: LanguageEnum.EN, label: 'English' }
+  { value: LanguageEnum.EN, label: 'English' },
+  { value: LanguageEnum.KO, label: '한국어' },
+  { value: LanguageEnum.ZH_TW, label: '繁體中文' },
+  { value: LanguageEnum.JA, label: '日本語' }
 ]
 
 /**
@@ -98,7 +129,7 @@ const i18nOptions: I18nOptions = {
   locale: getDefaultLanguage(),
   legacy: false,
   globalInjection: true,
-  fallbackLocale: LanguageEnum.ZH,
+  fallbackLocale: LanguageEnum.EN,
   messages
 }
 

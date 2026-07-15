@@ -5,15 +5,15 @@
   <div class="kn-spots">
     <ElCard shadow="never" class="toolbar-card">
       <div class="toolbar">
-        <span class="title">景点管理</span>
+        <span class="title">{{ $t('app.spotsTitle') }}</span>
         <div class="ops">
           <ElButton :loading="loading" @click="loadSpots">
             <ElIcon><Refresh /></ElIcon>
-            <span>刷新</span>
+            <span>{{ $t('app.refresh') }}</span>
           </ElButton>
           <ElButton type="primary" @click="openCreate">
             <ElIcon><Plus /></ElIcon>
-            <span>新增景点</span>
+            <span>{{ $t('app.spotsAdd') }}</span>
           </ElButton>
         </div>
       </div>
@@ -22,9 +22,14 @@
     <ElCard shadow="never">
       <ElTable v-loading="loading" :data="spots" stripe border>
         <ElTableColumn prop="id" label="ID" width="120" show-overflow-tooltip />
-        <ElTableColumn prop="name" label="名称" min-width="140" show-overflow-tooltip />
-        <ElTableColumn prop="scenicArea" label="所属景区" min-width="140" show-overflow-tooltip />
-        <ElTableColumn label="别名" min-width="200">
+        <ElTableColumn prop="name" :label="$t('app.name')" min-width="140" show-overflow-tooltip />
+        <ElTableColumn
+          prop="scenicArea"
+          :label="$t('app.spotsArea')"
+          min-width="140"
+          show-overflow-tooltip
+        />
+        <ElTableColumn :label="$t('app.spotsAliases')" min-width="200">
           <template #default="{ row }">
             <ElTag v-for="alias in row.aliases" :key="alias" size="small" class="alias-tag">
               {{ alias }}
@@ -32,87 +37,137 @@
             <span v-if="!row.aliases?.length" class="muted">-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="openInfo" label="开放信息" min-width="180" show-overflow-tooltip />
-        <ElTableColumn label="操作" width="180" fixed="right">
+        <ElTableColumn
+          prop="openInfo"
+          :label="$t('app.spotsOpenInfo')"
+          min-width="180"
+          show-overflow-tooltip
+        />
+        <ElTableColumn :label="$t('app.actions')" width="180" fixed="right">
           <template #default="{ row }">
             <ElButton type="primary" link @click="openEdit(row)">
               <ElIcon><Edit /></ElIcon>
-              <span>编辑</span>
+              <span>{{ $t('app.edit') }}</span>
             </ElButton>
-            <ElPopconfirm title="确定停用该景点吗？" confirm-button-text="停用" cancel-button-text="取消" @confirm="handleDisable(row)">
+            <ElPopconfirm
+              :title="$t('app.spotsDisableConfirm')"
+              :confirm-button-text="$t('app.disable')"
+              :cancel-button-text="$t('app.cancel')"
+              @confirm="handleDisable(row)"
+            >
               <template #reference>
                 <ElButton type="danger" link>
                   <ElIcon><CircleClose /></ElIcon>
-                  <span>停用</span>
+                  <span>{{ $t('app.disable') }}</span>
                 </ElButton>
               </template>
             </ElPopconfirm>
           </template>
         </ElTableColumn>
         <template #empty>
-          <ElEmpty description="暂无景点数据" />
+          <ElEmpty :description="$t('app.spotsEmpty')" />
         </template>
       </ElTable>
     </ElCard>
 
     <!-- 新增 / 编辑弹窗 -->
-    <ElDialog v-model="dialogVisible" :title="isEdit ? '编辑景点' : '新增景点'" width="720px" @closed="resetForm">
+    <ElDialog
+      v-model="dialogVisible"
+      :title="isEdit ? $t('app.spotsEdit') : $t('app.spotsAdd')"
+      width="720px"
+      @closed="resetForm"
+    >
       <ElForm ref="formRef" :model="form" :rules="rules" label-width="96px">
         <ElRow :gutter="16">
           <ElCol :span="12">
-            <ElFormItem label="名称" prop="name">
-              <ElInput v-model="form.name" placeholder="请输入景点名称" />
+            <ElFormItem :label="$t('app.name')" prop="name">
+              <ElInput v-model="form.name" :placeholder="$t('app.spotsNamePlaceholder')" />
             </ElFormItem>
           </ElCol>
           <ElCol :span="12">
-            <ElFormItem label="所属景区">
-              <ElInput v-model="form.scenicArea" placeholder="请输入所属景区" />
+            <ElFormItem :label="$t('app.spotsArea')">
+              <ElInput v-model="form.scenicArea" :placeholder="$t('app.spotsAreaPlaceholder')" />
             </ElFormItem>
           </ElCol>
         </ElRow>
-        <ElFormItem label="别名">
-          <ElInput v-model="aliasesText" placeholder="多个别名以逗号分隔" />
+        <ElFormItem :label="$t('app.spotsAliases')">
+          <ElInput v-model="aliasesText" :placeholder="$t('app.spotsAliasesPlaceholder')" />
         </ElFormItem>
-        <ElFormItem label="位置说明">
-          <ElInput v-model="form.locationText" placeholder="请输入位置说明" />
+        <ElFormItem :label="$t('app.spotsLocation')">
+          <ElInput v-model="form.locationText" :placeholder="$t('app.spotsLocationPlaceholder')" />
         </ElFormItem>
-        <ElFormItem label="基本参数">
-          <ElInput v-model="form.parameters" type="textarea" :rows="2" placeholder="高度、面积等基本参数" />
+        <ElFormItem :label="$t('app.spotsParameters')">
+          <ElInput
+            v-model="form.parameters"
+            type="textarea"
+            :rows="2"
+            :placeholder="$t('app.spotsParametersPlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="核心功能">
-          <ElInput v-model="form.coreFunction" type="textarea" :rows="2" placeholder="请输入核心功能" />
+        <ElFormItem :label="$t('app.spotsCore')">
+          <ElInput
+            v-model="form.coreFunction"
+            type="textarea"
+            :rows="2"
+            :placeholder="$t('app.spotsCorePlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="文化背景">
-          <ElInput v-model="form.culture" type="textarea" :rows="2" placeholder="请输入文化背景" />
+        <ElFormItem :label="$t('app.spotsCulture')">
+          <ElInput
+            v-model="form.culture"
+            type="textarea"
+            :rows="2"
+            :placeholder="$t('app.spotsCulturePlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="详细介绍">
-          <ElInput v-model="form.detail" type="textarea" :rows="3" placeholder="请输入详细介绍" />
+        <ElFormItem :label="$t('app.spotsDetail')">
+          <ElInput
+            v-model="form.detail"
+            type="textarea"
+            :rows="3"
+            :placeholder="$t('app.spotsDetailPlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="亮点看点">
-          <ElInput v-model="form.highlights" type="textarea" :rows="2" placeholder="请输入亮点看点" />
+        <ElFormItem :label="$t('app.spotsHighlights')">
+          <ElInput
+            v-model="form.highlights"
+            type="textarea"
+            :rows="2"
+            :placeholder="$t('app.spotsHighlightsPlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="开放信息">
-          <ElInput v-model="form.openInfo" placeholder="开放时间、票价等" />
+        <ElFormItem :label="$t('app.spotsOpenInfo')">
+          <ElInput v-model="form.openInfo" :placeholder="$t('app.spotsOpenPlaceholder')" />
         </ElFormItem>
-        <ElFormItem label="备注">
-          <ElInput v-model="form.notes" type="textarea" :rows="2" placeholder="请输入备注" />
+        <ElFormItem :label="$t('app.spotsNotes')">
+          <ElInput
+            v-model="form.notes"
+            type="textarea"
+            :rows="2"
+            :placeholder="$t('app.spotsNotesPlaceholder')"
+          />
         </ElFormItem>
       </ElForm>
       <template #footer>
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" :loading="saving" @click="handleSave">保存</ElButton>
+        <ElButton @click="dialogVisible = false">{{ $t('app.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="saving" @click="handleSave">{{
+          $t('app.save')
+        }}</ElButton>
       </template>
     </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { CircleClose, Edit, Plus, Refresh } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
   import { createAdminSpot, deleteAdminSpot, getAdminSpots, updateAdminSpot } from '@/api/admin'
   import type { ScenicSpot } from '@/api/guide'
 
   defineOptions({ name: 'KnowledgeSpots' })
+
+  const { t } = useI18n()
 
   type SpotForm = Omit<ScenicSpot, 'id' | 'aliases'>
 
@@ -144,7 +199,7 @@
   const form = reactive<SpotForm>(emptyForm())
 
   const rules: FormRules = {
-    name: [{ required: true, message: '请输入景点名称', trigger: 'blur' }]
+    name: [{ required: true, message: t('app.spotsNamePlaceholder'), trigger: 'blur' }]
   }
 
   function parseAliases(text: string): string[] {
@@ -159,7 +214,7 @@
     try {
       spots.value = await getAdminSpots()
     } catch {
-      ElMessage.error('景点列表加载失败')
+      ElMessage.error(t('app.spotsListFailed'))
     } finally {
       loading.value = false
     }
@@ -209,15 +264,15 @@
     try {
       if (isEdit.value) {
         await updateAdminSpot(editingId.value, payload)
-        ElMessage.success('景点更新成功')
+        ElMessage.success(t('app.spotsUpdated'))
       } else {
         await createAdminSpot(payload)
-        ElMessage.success('景点创建成功')
+        ElMessage.success(t('app.spotsCreated'))
       }
       dialogVisible.value = false
       await loadSpots()
     } catch {
-      ElMessage.error(isEdit.value ? '景点更新失败' : '景点创建失败')
+      ElMessage.error(isEdit.value ? t('app.spotsUpdateFailed') : t('app.spotsCreateFailed'))
     } finally {
       saving.value = false
     }
@@ -226,10 +281,10 @@
   async function handleDisable(row: ScenicSpot) {
     try {
       await deleteAdminSpot(row.id)
-      ElMessage.success('景点已停用')
+      ElMessage.success(t('app.spotsDisabled'))
       await loadSpots()
     } catch {
-      ElMessage.error('停用失败')
+      ElMessage.error(t('app.disableFailed'))
     }
   }
 

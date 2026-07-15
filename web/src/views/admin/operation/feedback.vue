@@ -6,22 +6,26 @@
     <ElCard shadow="never" class="toolbar-card">
       <div class="toolbar">
         <div class="toolbar-left">
-          <span class="toolbar-title">反馈分析</span>
-          <ElTag type="info" effect="plain" round>共 {{ clusters.length }} 类</ElTag>
+          <span class="toolbar-title">{{ $t('app.feedbackTitle') }}</span>
+          <ElTag type="info" effect="plain" round>
+            {{ $t('app.feedbackClassCount', { count: clusters.length }) }}
+          </ElTag>
         </div>
-        <ElButton :icon="Refresh" @click="loadClusters">刷新</ElButton>
+        <ElButton :icon="Refresh" @click="loadClusters">{{ $t('app.refresh') }}</ElButton>
       </div>
     </ElCard>
 
     <div v-loading="loading" class="content">
-      <ElEmpty v-if="!loading && !clusters.length" description="暂无反馈数据" />
+      <ElEmpty v-if="!loading && !clusters.length" :description="$t('app.feedbackEmpty')" />
 
       <ElRow v-else :gutter="16">
         <ElCol v-for="(cluster, i) in clusters" :key="i" :xs="24" :sm="12" :lg="8">
           <ElCard shadow="hover" class="cluster-card">
             <div class="cluster-head">
               <span class="cluster-label">{{ cluster.label }}</span>
-              <ElTag type="primary" effect="dark" round>{{ cluster.count }} 条</ElTag>
+              <ElTag type="primary" effect="dark" round>
+                {{ $t('app.feedbackItemCount', { count: cluster.count }) }}
+              </ElTag>
             </div>
 
             <div class="cluster-rating">
@@ -30,19 +34,23 @@
             </div>
 
             <div class="cluster-samples">
-              <p class="samples-title">样本反馈</p>
-              <ElEmpty v-if="!cluster.samples?.length" :image-size="60" description="暂无样本" />
+              <p class="samples-title">{{ $t('app.feedbackSamples') }}</p>
+              <ElEmpty
+                v-if="!cluster.samples?.length"
+                :image-size="60"
+                :description="$t('app.feedbackNoSamples')"
+              />
               <ul v-else class="samples-list">
                 <li v-for="(s, si) in cluster.samples" :key="si" class="sample-item">
                   <div class="sample-tags">
                     <ElTag v-if="s.rating != null" size="small" type="warning" effect="plain">
-                      评分 {{ s.rating }}
+                      {{ $t('app.feedbackRating', { rating: s.rating }) }}
                     </ElTag>
                     <ElTag v-if="s.vote" size="small" :type="voteType(s.vote)" effect="plain">
                       {{ voteText(s.vote) }}
                     </ElTag>
                   </div>
-                  <span class="sample-comment">{{ s.comment || '（无文字评论）' }}</span>
+                  <span class="sample-comment">{{ s.comment || $t('app.feedbackNoComment') }}</span>
                 </li>
               </ul>
             </div>
@@ -54,16 +62,19 @@
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { Refresh } from '@element-plus/icons-vue'
   import { getFeedbackClusters, type FeedbackCluster } from '@/api/admin'
 
   defineOptions({ name: 'OperationFeedback' })
 
+  const { t } = useI18n()
+
   const loading = ref(false)
   const clusters = ref<FeedbackCluster[]>([])
 
   function voteText(vote?: string) {
-    const map: Record<string, string> = { up: '点赞', down: '点踩' }
+    const map: Record<string, string> = { up: t('app.feedbackUp'), down: t('app.feedbackDown') }
     return (vote && map[vote]) || vote || ''
   }
 
@@ -75,8 +86,8 @@
     loading.value = true
     try {
       clusters.value = await getFeedbackClusters()
-    } catch (e) {
-      ElMessage.error('加载反馈聚类失败')
+    } catch {
+      ElMessage.error(t('app.feedbackLoadFailed'))
     } finally {
       loading.value = false
     }

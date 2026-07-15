@@ -2,75 +2,98 @@
 <template>
   <div class="user-admin">
     <div class="toolbar">
-      <ElButton type="primary" @click="openCreate">新增账号</ElButton>
-      <ElButton @click="load">刷新</ElButton>
+      <ElButton type="primary" @click="openCreate">{{ $t('app.usersAdd') }}</ElButton>
+      <ElButton @click="load">{{ $t('app.refresh') }}</ElButton>
     </div>
 
     <ElTable :data="users" v-loading="loading" border>
-      <ElTableColumn prop="username" label="登录名" min-width="140" />
-      <ElTableColumn prop="displayName" label="显示名称" min-width="140" />
-      <ElTableColumn label="角色" width="120">
+      <ElTableColumn prop="username" :label="$t('app.usersLoginName')" min-width="140" />
+      <ElTableColumn prop="displayName" :label="$t('app.usersDisplayName')" min-width="140" />
+      <ElTableColumn :label="$t('app.usersRole')" width="130">
         <template #default="{ row }">
           <ElTag :type="row.role === 'admin' ? 'danger' : 'primary'">
-            {{ row.role === 'admin' ? '管理员' : '运营' }}
+            {{ row.role === 'admin' ? $t('app.usersAdmin') : $t('app.usersOperator') }}
           </ElTag>
         </template>
       </ElTableColumn>
-      <ElTableColumn label="状态" width="100">
+      <ElTableColumn :label="$t('app.status')" width="100">
         <template #default="{ row }">
           <ElTag :type="row.status === 'active' ? 'success' : 'info'">
-            {{ row.status === 'active' ? '正常' : '停用' }}
+            {{ row.status === 'active' ? $t('app.usersActive') : $t('app.disable') }}
           </ElTag>
         </template>
       </ElTableColumn>
-      <ElTableColumn prop="createdAt" label="创建时间" min-width="180" />
-      <ElTableColumn label="操作" width="220" fixed="right">
+      <ElTableColumn prop="createdAt" :label="$t('app.createdAt')" min-width="180" />
+      <ElTableColumn :label="$t('app.actions')" width="230" fixed="right">
         <template #default="{ row }">
-          <ElButton size="small" text type="primary" @click="openEdit(row)">编辑</ElButton>
+          <ElButton size="small" text type="primary" @click="openEdit(row)">{{
+            $t('app.edit')
+          }}</ElButton>
           <ElButton
             size="small"
             text
             :type="row.status === 'active' ? 'warning' : 'success'"
             @click="toggleStatus(row)"
           >
-            {{ row.status === 'active' ? '停用' : '启用' }}
+            {{ row.status === 'active' ? $t('app.disable') : $t('app.enabled') }}
           </ElButton>
-          <ElPopconfirm title="确认删除该账号？" @confirm="remove(row)">
+          <ElPopconfirm :title="$t('app.usersDeleteConfirm')" @confirm="remove(row)">
             <template #reference>
-              <ElButton size="small" text type="danger" :disabled="row.username === 'admin'">删除</ElButton>
+              <ElButton size="small" text type="danger" :disabled="row.username === 'admin'">
+                {{ $t('app.usersDelete') }}
+              </ElButton>
             </template>
           </ElPopconfirm>
         </template>
       </ElTableColumn>
     </ElTable>
 
-    <ElDialog v-model="dialogVisible" :title="editing ? '编辑账号' : '新增账号'" width="480px">
+    <ElDialog
+      v-model="dialogVisible"
+      :title="editing ? $t('app.usersEdit') : $t('app.usersAdd')"
+      width="480px"
+    >
       <ElForm :model="form" label-width="90px">
-        <ElFormItem label="登录名" required>
-          <ElInput v-model="form.username" :disabled="editing" placeholder="用于登录的用户名" />
+        <ElFormItem :label="$t('app.usersLoginName')" required>
+          <ElInput
+            v-model="form.username"
+            :disabled="editing"
+            :placeholder="$t('app.usersUsernamePlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="显示名称">
+        <ElFormItem :label="$t('app.usersDisplayName')">
           <ElInput v-model="form.displayName" />
         </ElFormItem>
-        <ElFormItem :label="editing ? '重置密码' : '密码'" :required="!editing">
-          <ElInput v-model="form.password" type="password" show-password :placeholder="editing ? '留空则不修改' : '设置登录密码'" />
+        <ElFormItem
+          :label="editing ? $t('app.usersResetPassword') : $t('app.usersPassword')"
+          :required="!editing"
+        >
+          <ElInput
+            v-model="form.password"
+            type="password"
+            show-password
+            :placeholder="
+              editing ? $t('app.usersKeepPassword') : $t('app.usersPasswordPlaceholder')
+            "
+          />
         </ElFormItem>
-        <ElFormItem label="角色">
+        <ElFormItem :label="$t('app.usersRole')">
           <ElSelect v-model="form.role">
-            <ElOption label="管理员" value="admin" />
-            <ElOption label="运营" value="operator" />
+            <ElOption :label="$t('app.usersAdmin')" value="admin" />
+            <ElOption :label="$t('app.usersOperator')" value="operator" />
           </ElSelect>
         </ElFormItem>
       </ElForm>
       <template #footer>
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" :loading="saving" @click="save">保存</ElButton>
+        <ElButton @click="dialogVisible = false">{{ $t('app.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="saving" @click="save">{{ $t('app.save') }}</ElButton>
       </template>
     </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { onMounted, reactive, ref } from 'vue'
   import {
     getAdminUsers,
@@ -81,6 +104,8 @@
   } from '@/api/admin'
 
   defineOptions({ name: 'SystemUsers' })
+
+  const { t } = useI18n()
 
   const users = ref<AdminUser[]>([])
   const loading = ref(false)
@@ -97,7 +122,7 @@
     try {
       users.value = await getAdminUsers()
     } catch {
-      ElMessage.error('用户列表加载失败')
+      ElMessage.error(t('app.usersListFailed'))
     } finally {
       loading.value = false
     }
@@ -111,7 +136,12 @@
   }
 
   function openEdit(row: AdminUser) {
-    Object.assign(form, { username: row.username, displayName: row.displayName, password: '', role: row.role })
+    Object.assign(form, {
+      username: row.username,
+      displayName: row.displayName,
+      password: '',
+      role: row.role
+    })
     editing.value = true
     editingId.value = row.id
     dialogVisible.value = true
@@ -119,7 +149,7 @@
 
   async function save() {
     if (!form.username.trim() || (!editing.value && !form.password)) {
-      ElMessage.warning('请填写登录名和密码')
+      ElMessage.warning(t('app.usersRequired'))
       return
     }
     saving.value = true
@@ -133,11 +163,11 @@
       } else {
         await createAdminUser2({ ...form })
       }
-      ElMessage.success('已保存')
+      ElMessage.success(t('app.dhSaved'))
       dialogVisible.value = false
       await load()
     } catch (e: any) {
-      ElMessage.error(e?.message || '保存失败')
+      ElMessage.error(e?.message || t('app.dhSaveFailed'))
     } finally {
       saving.value = false
     }
@@ -148,17 +178,17 @@
       await updateAdminUser(row.id, { status: row.status === 'active' ? 'disabled' : 'active' })
       await load()
     } catch {
-      ElMessage.error('操作失败')
+      ElMessage.error(t('app.usersActionFailed'))
     }
   }
 
   async function remove(row: AdminUser) {
     try {
       await deleteAdminUser(row.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('app.usersDeleted'))
       await load()
     } catch (e: any) {
-      ElMessage.error(e?.message || '删除失败')
+      ElMessage.error(e?.message || t('app.usersDeleteFailed'))
     }
   }
 

@@ -6,13 +6,15 @@
     <ElCard shadow="never" class="toolbar-card">
       <div class="toolbar">
         <div class="toolbar-left">
-          <span class="toolbar-title">会话记录</span>
-          <ElTag type="info" effect="plain" round>共 {{ list.length }} 条</ElTag>
+          <span class="toolbar-title">{{ $t('app.conversationsTitle') }}</span>
+          <ElTag type="info" effect="plain" round>
+            {{ $t('app.conversationsCount', { count: list.length }) }}
+          </ElTag>
         </div>
         <div class="toolbar-right">
-          <span class="switch-label">只看低满意度</span>
+          <span class="switch-label">{{ $t('app.conversationsLowOnly') }}</span>
           <ElSwitch v-model="lowOnly" @change="loadList" />
-          <ElButton :icon="Refresh" @click="loadList">刷新</ElButton>
+          <ElButton :icon="Refresh" @click="loadList">{{ $t('app.refresh') }}</ElButton>
         </div>
       </div>
     </ElCard>
@@ -26,13 +28,28 @@
         highlight-current-row
         @row-click="openDetail"
       >
-        <ElTableColumn prop="sessionId" label="会话 ID" min-width="180" show-overflow-tooltip />
-        <ElTableColumn label="开始时间" min-width="170">
+        <ElTableColumn
+          prop="sessionId"
+          :label="$t('app.conversationsId')"
+          min-width="180"
+          show-overflow-tooltip
+        />
+        <ElTableColumn :label="$t('app.conversationsStart')" min-width="170">
           <template #default="{ row }">{{ formatTime(row.startedAt) }}</template>
         </ElTableColumn>
-        <ElTableColumn prop="messageCount" label="消息数" width="90" align="center" />
-        <ElTableColumn prop="userQuestionCount" label="提问数" width="90" align="center" />
-        <ElTableColumn label="平均评分" width="120" align="center">
+        <ElTableColumn
+          prop="messageCount"
+          :label="$t('app.conversationsMessages')"
+          width="100"
+          align="center"
+        />
+        <ElTableColumn
+          prop="userQuestionCount"
+          :label="$t('app.conversationsQuestions')"
+          width="100"
+          align="center"
+        />
+        <ElTableColumn :label="$t('app.conversationsAverage')" width="130" align="center">
           <template #default="{ row }">
             <ElRate
               v-if="row.averageRating !== null"
@@ -41,21 +58,33 @@
               :max="5"
               size="small"
             />
-            <span v-else class="muted">暂无</span>
+            <span v-else class="muted">{{ $t('app.conversationsNone') }}</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="mainFocus" label="关注点" min-width="140" show-overflow-tooltip />
-        <ElTableColumn label="满意度" width="110" align="center">
+        <ElTableColumn
+          prop="mainFocus"
+          :label="$t('app.conversationsFocus')"
+          min-width="140"
+          show-overflow-tooltip
+        />
+        <ElTableColumn :label="$t('app.conversationsSatisfaction')" width="120" align="center">
           <template #default="{ row }">
             <ElTag :type="row.lowSatisfaction ? 'danger' : 'success'" effect="light">
-              {{ row.lowSatisfaction ? '低满意度' : '正常' }}
+              {{ row.lowSatisfaction ? $t('app.conversationsLow') : $t('app.conversationsNormal') }}
             </ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="feedbackCount" label="反馈数" width="90" align="center" />
-        <ElTableColumn label="操作" width="100" align="center" fixed="right">
+        <ElTableColumn
+          prop="feedbackCount"
+          :label="$t('app.conversationsFeedbackCount')"
+          width="100"
+          align="center"
+        />
+        <ElTableColumn :label="$t('app.actions')" width="100" align="center" fixed="right">
           <template #default="{ row }">
-            <ElButton type="primary" link @click.stop="openDetail(row)">详情</ElButton>
+            <ElButton type="primary" link @click.stop="openDetail(row)">{{
+              $t('app.conversationsDetail')
+            }}</ElButton>
           </template>
         </ElTableColumn>
       </ElTable>
@@ -64,7 +93,7 @@
     <!-- 会话详情 -->
     <ElDialog
       v-model="dialogVisible"
-      title="会话详情"
+      :title="$t('app.conversationsDetailTitle')"
       width="760px"
       top="6vh"
       destroy-on-close
@@ -72,38 +101,50 @@
       <div v-loading="detailLoading" class="detail-wrap">
         <template v-if="detail">
           <ElDescriptions :column="3" size="small" border class="detail-summary">
-            <ElDescriptionsItem label="会话 ID">{{ detail.sessionId }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="消息数">{{ detail.summary?.messageCount ?? '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="关注点">{{ detail.summary?.mainFocus || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem :label="$t('app.conversationsId')">{{
+              detail.sessionId
+            }}</ElDescriptionsItem>
+            <ElDescriptionsItem :label="$t('app.conversationsMessages')">{{
+              detail.summary?.messageCount ?? '-'
+            }}</ElDescriptionsItem>
+            <ElDescriptionsItem :label="$t('app.conversationsFocus')">{{
+              detail.summary?.mainFocus || '-'
+            }}</ElDescriptionsItem>
           </ElDescriptions>
 
           <ElScrollbar class="chat-body" height="52vh">
-            <ElEmpty v-if="!detail.messages?.length" description="暂无消息" />
-            <div
-              v-for="msg in detail.messages"
-              :key="msg.id"
-              class="msg-row"
-              :class="msg.role"
-            >
+            <ElEmpty
+              v-if="!detail.messages?.length"
+              :description="$t('app.conversationsNoMessages')"
+            />
+            <div v-for="msg in detail.messages" :key="msg.id" class="msg-row" :class="msg.role">
               <div class="bubble">
                 <p class="bubble-text">{{ msg.content }}</p>
 
                 <div class="bubble-meta">
                   <ElTag v-if="msg.intentLabel" size="small" type="info" effect="plain">
-                    意图：{{ msg.intentLabel }}
+                    {{ $t('app.conversationsIntent', { label: msg.intentLabel }) }}
                   </ElTag>
                   <ElTag v-if="msg.emotionLabel" size="small" type="warning" effect="plain">
-                    情绪：{{ msg.emotionLabel }}
+                    {{ $t('app.conversationsEmotion', { label: msg.emotionLabel }) }}
                   </ElTag>
-                  <span v-if="msg.latencyMs != null" class="latency">响应 {{ msg.latencyMs }}ms</span>
+                  <span v-if="msg.latencyMs != null" class="latency">
+                    {{ $t('app.conversationsResponse', { latency: msg.latencyMs }) }}
+                  </span>
                 </div>
 
                 <div v-if="msg.role === 'assistant'" class="bubble-actions">
                   <div v-if="msg.annotation" class="annotation-tip">
-                    <ElTag :type="annotationTagType(msg.annotation.label)" size="small" effect="dark">
+                    <ElTag
+                      :type="annotationTagType(msg.annotation.label)"
+                      size="small"
+                      effect="dark"
+                    >
                       {{ annotationText(msg.annotation.label) }}
                     </ElTag>
-                    <span v-if="msg.annotation.note" class="annotation-note">{{ msg.annotation.note }}</span>
+                    <span v-if="msg.annotation.note" class="annotation-note">{{
+                      msg.annotation.note
+                    }}</span>
                   </div>
                   <div class="action-buttons">
                     <ElButton
@@ -113,7 +154,7 @@
                       :loading="busyId === msg.id"
                       @click="annotate(msg, 'correct')"
                     >
-                      标记正确
+                      {{ $t('app.conversationsMarkCorrect') }}
                     </ElButton>
                     <ElButton
                       size="small"
@@ -122,7 +163,7 @@
                       :loading="busyId === msg.id"
                       @click="annotate(msg, 'wrong')"
                     >
-                      标记错误
+                      {{ $t('app.conversationsMarkWrong') }}
                     </ElButton>
                     <ElButton
                       size="small"
@@ -131,7 +172,7 @@
                       :loading="busyId === msg.id"
                       @click="annotate(msg, 'needs_knowledge')"
                     >
-                      需补充知识
+                      {{ $t('app.conversationsNeedsKnowledge') }}
                     </ElButton>
                     <ElButton
                       size="small"
@@ -139,7 +180,7 @@
                       :loading="draftId === msg.id"
                       @click="genDraft(msg)"
                     >
-                      生成知识草稿
+                      {{ $t('app.conversationsDraft') }}
                     </ElButton>
                   </div>
                 </div>
@@ -153,6 +194,7 @@
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { Refresh } from '@element-plus/icons-vue'
   import { ElMessageBox } from 'element-plus'
   import {
@@ -165,6 +207,8 @@
 
   defineOptions({ name: 'OperationConversations' })
 
+  const { t } = useI18n()
+
   type AnnotationLabel = 'correct' | 'wrong' | 'needs_knowledge'
 
   const loading = ref(false)
@@ -173,7 +217,12 @@
 
   const dialogVisible = ref(false)
   const detailLoading = ref(false)
-  const detail = ref<{ sessionId: string; messages: any[]; feedback: any[]; summary: ConversationSummary } | null>(null)
+  const detail = ref<{
+    sessionId: string
+    messages: any[]
+    feedback: any[]
+    summary: ConversationSummary
+  } | null>(null)
   const busyId = ref<string | null>(null)
   const draftId = ref<string | null>(null)
 
@@ -185,9 +234,9 @@
 
   function annotationText(label: string) {
     const map: Record<string, string> = {
-      correct: '已标记正确',
-      wrong: '已标记错误',
-      needs_knowledge: '需补充知识'
+      correct: t('app.conversationsMarkedCorrect'),
+      wrong: t('app.conversationsMarkedWrong'),
+      needs_knowledge: t('app.conversationsNeedsKnowledge')
     }
     return map[label] || label
   }
@@ -205,8 +254,8 @@
     loading.value = true
     try {
       list.value = await getConversations(lowOnly.value ? { lowSatisfactionOnly: true } : {})
-    } catch (e) {
-      ElMessage.error('加载会话列表失败')
+    } catch {
+      ElMessage.error(t('app.conversationsListFailed'))
     } finally {
       loading.value = false
     }
@@ -219,8 +268,8 @@
     detail.value = null
     try {
       detail.value = await getConversationDetail(row.sessionId)
-    } catch (e) {
-      ElMessage.error('加载会话详情失败')
+    } catch {
+      ElMessage.error(t('app.conversationsDetailFailed'))
     } finally {
       detailLoading.value = false
     }
@@ -231,9 +280,9 @@
     try {
       await annotateMessage(msg.id, { label })
       msg.annotation = { label, note: msg.annotation?.note }
-      ElMessage.success('标注成功')
-    } catch (e) {
-      ElMessage.error('标注失败')
+      ElMessage.success(t('app.conversationsMarked'))
+    } catch {
+      ElMessage.error(t('app.conversationsMarkFailed'))
     } finally {
       busyId.value = null
     }
@@ -244,18 +293,28 @@
     try {
       const draft = await createKnowledgeDraft(msg.id)
       const html = [
-        draft?.title ? `<p><strong>标题：</strong>${draft.title}</p>` : '',
-        draft?.question ? `<p><strong>问题：</strong>${draft.question}</p>` : '',
-        draft?.suggestedAnswer ? `<p><strong>建议答案：</strong>${draft.suggestedAnswer}</p>` : ''
+        draft?.title
+          ? `<p><strong>${t('app.conversationsDraftTitle')}</strong>${draft.title}</p>`
+          : '',
+        draft?.question
+          ? `<p><strong>${t('app.conversationsDraftQuestion')}</strong>${draft.question}</p>`
+          : '',
+        draft?.suggestedAnswer
+          ? `<p><strong>${t('app.conversationsDraftAnswer')}</strong>${draft.suggestedAnswer}</p>`
+          : ''
       ]
         .filter(Boolean)
         .join('')
-      ElMessageBox.alert(html || '未生成有效草稿内容', '知识草稿', {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: '知道了'
-      })
-    } catch (e) {
-      ElMessage.error('生成知识草稿失败')
+      ElMessageBox.alert(
+        html || t('app.conversationsDraftEmpty'),
+        t('app.conversationsDraftDialog'),
+        {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: t('app.understood')
+        }
+      )
+    } catch {
+      ElMessage.error(t('app.conversationsDraftFailed'))
     } finally {
       draftId.value = null
     }

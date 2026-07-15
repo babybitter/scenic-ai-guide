@@ -278,6 +278,7 @@
    */
   const initLanguage = (): void => {
     locale.value = language.value
+    document.documentElement.lang = language.value
   }
 
   /**
@@ -288,6 +289,7 @@
     if (locale.value === lang) return
     locale.value = lang
     userStore.setLanguage(lang)
+    document.documentElement.lang = lang
     reload(50)
   }
 

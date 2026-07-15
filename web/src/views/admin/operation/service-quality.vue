@@ -6,13 +6,13 @@
     <ElCard shadow="never" class="toolbar-card">
       <div class="toolbar">
         <div class="toolbar-left">
-          <span class="toolbar-title">服务质量报告</span>
+          <span class="toolbar-title">{{ $t('app.qualityTitle') }}</span>
           <ElTag v-if="report" type="info" effect="plain" round>
-            生成于 {{ formatTime(report.generatedAt) }}
+            {{ $t('app.qualityGeneratedAt', { time: formatTime(report.generatedAt) }) }}
           </ElTag>
         </div>
         <ElButton type="primary" :icon="Refresh" :loading="loading" @click="loadReport">
-          刷新报告
+          {{ $t('app.qualityRefresh') }}
         </ElButton>
       </div>
     </ElCard>
@@ -22,22 +22,32 @@
       <ElRow :gutter="16" class="kpi-row">
         <ElCol :xs="12" :sm="6">
           <ElCard shadow="hover" class="kpi-card">
-            <ElStatistic title="会话总数" :value="report.conversationCount" />
+            <ElStatistic
+              :title="$t('app.qualityConversations')"
+              :value="report.conversationCount"
+            />
           </ElCard>
         </ElCol>
         <ElCol :xs="12" :sm="6">
           <ElCard shadow="hover" class="kpi-card">
-            <ElStatistic title="低满意度会话" :value="report.lowSatisfactionCount" />
+            <ElStatistic
+              :title="$t('app.qualityLowSatisfaction')"
+              :value="report.lowSatisfactionCount"
+            />
           </ElCard>
         </ElCol>
         <ElCol :xs="12" :sm="6">
           <ElCard shadow="hover" class="kpi-card">
-            <ElStatistic title="平均满意度" :value="report.averageSatisfaction" :precision="2" />
+            <ElStatistic
+              :title="$t('app.qualityAverage')"
+              :value="report.averageSatisfaction"
+              :precision="2"
+            />
           </ElCard>
         </ElCol>
         <ElCol :xs="12" :sm="6">
           <ElCard shadow="hover" class="kpi-card">
-            <ElStatistic title="错误回答数" :value="report.wrongAnswerCount" />
+            <ElStatistic :title="$t('app.qualityWrongAnswers')" :value="report.wrongAnswerCount" />
           </ElCard>
         </ElCol>
       </ElRow>
@@ -47,16 +57,22 @@
         <ElCol :xs="24" :lg="12">
           <ElCard shadow="never" class="section-card">
             <template #header>
-              <span class="section-title">常见问题</span>
+              <span class="section-title">{{ $t('app.qualityIssues') }}</span>
             </template>
-            <ElEmpty v-if="!report.commonIssues?.length" :image-size="80" description="暂无常见问题" />
+            <ElEmpty
+              v-if="!report.commonIssues?.length"
+              :image-size="80"
+              :description="$t('app.qualityNoIssues')"
+            />
             <ul v-else class="issue-list">
               <li v-for="(issue, i) in report.commonIssues" :key="i" class="issue-item">
                 <div class="issue-main">
                   <ElTag type="info" effect="plain" round class="issue-rank">{{ i + 1 }}</ElTag>
                   <span class="issue-label">{{ issue.label }}</span>
                 </div>
-                <ElTag type="danger" effect="light">{{ issue.count }} 次</ElTag>
+                <ElTag type="danger" effect="light">
+                  {{ $t('app.qualityOccurrences', { count: issue.count }) }}
+                </ElTag>
               </li>
             </ul>
           </ElCard>
@@ -66,12 +82,12 @@
         <ElCol :xs="24" :lg="12">
           <ElCard shadow="never" class="section-card">
             <template #header>
-              <span class="section-title">优化建议</span>
+              <span class="section-title">{{ $t('app.qualitySuggestions') }}</span>
             </template>
             <ElEmpty
               v-if="!report.optimizationSuggestions?.length"
               :image-size="80"
-              description="暂无优化建议"
+              :description="$t('app.qualityNoSuggestions')"
             />
             <ElTimeline v-else class="suggestion-timeline">
               <ElTimelineItem
@@ -88,15 +104,18 @@
       </ElRow>
     </template>
 
-    <ElEmpty v-else-if="!loading" description="暂无服务质量报告" />
+    <ElEmpty v-else-if="!loading" :description="$t('app.qualityEmpty')" />
   </div>
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { Refresh } from '@element-plus/icons-vue'
   import { getServiceQualityReport, type ServiceQualityReport } from '@/api/admin'
 
   defineOptions({ name: 'OperationServiceQuality' })
+
+  const { t } = useI18n()
 
   const loading = ref(false)
   const report = ref<ServiceQualityReport | null>(null)
@@ -111,8 +130,8 @@
     loading.value = true
     try {
       report.value = await getServiceQualityReport()
-    } catch (e) {
-      ElMessage.error('加载服务质量报告失败')
+    } catch {
+      ElMessage.error(t('app.qualityLoadFailed'))
     } finally {
       loading.value = false
     }

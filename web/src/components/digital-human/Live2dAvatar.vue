@@ -13,7 +13,7 @@
       <!-- 降级 / 加载态 -->
       <div v-if="!isRendering" class="l2d-fallback">
         <ElIcon class="l2d-fallback-icon" :size="46"><Avatar /></ElIcon>
-        <p class="l2d-fallback-name">{{ config?.name || '灵山 AI 导游' }}</p>
+        <p class="l2d-fallback-name">{{ config?.name || $t('app.avatarGuideName') }}</p>
         <p class="l2d-fallback-tip">{{ fallbackTip }}</p>
       </div>
 
@@ -24,8 +24,14 @@
       </div>
 
       <!-- 音频解锁提示 -->
-      <div v-if="isRendering && !live2d.audioReady.value" class="l2d-audio-mask" @click="enableAudio">
-        <ElButton type="primary" round :icon="Microphone">点击开启数字人声音</ElButton>
+      <div
+        v-if="isRendering && !live2d.audioReady.value"
+        class="l2d-audio-mask"
+        @click="enableAudio"
+      >
+        <ElButton type="primary" round :icon="Microphone">{{
+          $t('app.avatarEnableAudio')
+        }}</ElButton>
       </div>
     </div>
   </div>
@@ -33,11 +39,14 @@
 
 <script setup lang="ts">
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { Avatar, Microphone } from '@element-plus/icons-vue'
   import { useLive2dAvatar } from '@/composables/useLive2dAvatar'
   import type { DigitalHumanConfig } from '@/api/digital-human'
 
   defineOptions({ name: 'Live2dAvatar' })
+
+  const { t } = useI18n()
 
   const props = defineProps<{ config: DigitalHumanConfig | null }>()
   const emit = defineEmits<{
@@ -54,23 +63,23 @@
   const statusText = computed(() => {
     switch (live2d.status.value) {
       case 'connecting':
-        return '加载中'
+        return t('app.avatarLoading')
       case 'ready':
-        return '在线'
+        return t('app.avatarOnline')
       case 'speaking':
-        return '讲解中'
+        return t('app.avatarSpeaking')
       case 'error':
-        return '文本模式'
+        return t('app.avatarTextMode')
       default:
-        return '待机'
+        return t('app.avatarIdle')
     }
   })
 
   const fallbackTip = computed(() => {
-    if (live2d.status.value === 'connecting') return 'Live2D 模型加载中…'
+    if (live2d.status.value === 'connecting') return t('app.avatarModelLoading')
     if (live2d.status.value === 'error')
-      return live2d.errorMessage.value || '数字人不可用，已切换为文本模式'
-    return '数字人准备中…'
+      return live2d.errorMessage.value || t('app.guideUnavailable')
+    return t('app.avatarPreparing')
   })
 
   function onWinResize() {
@@ -78,9 +87,12 @@
   }
 
   async function init() {
-    if (config.value && (config.value.serviceStatus === 'text_only' || !config.value.assetAvailable)) {
+    if (
+      config.value &&
+      (config.value.serviceStatus === 'text_only' || !config.value.assetAvailable)
+    ) {
       live2d.status.value = 'error'
-      live2d.errorMessage.value = '当前为纯文本讲解模式'
+      live2d.errorMessage.value = t('app.avatarTextOnly')
       emit('ready', config.value)
       return
     }
@@ -107,7 +119,14 @@
     return live2d.interrupt()
   }
 
-  defineExpose({ speak, enableAudio, interrupt, status: live2d.status, audioReady: live2d.audioReady, config })
+  defineExpose({
+    speak,
+    enableAudio,
+    interrupt,
+    status: live2d.status,
+    audioReady: live2d.audioReady,
+    config
+  })
 
   onMounted(init)
   onBeforeUnmount(() => {

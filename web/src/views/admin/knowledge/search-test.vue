@@ -8,27 +8,27 @@
       <ElCol :xs="24" :md="12">
         <ElCard shadow="never" class="section-card">
           <template #header>
-            <span class="section-title">知识检索预览</span>
+            <span class="section-title">{{ $t('app.searchPreview') }}</span>
           </template>
           <div class="query-bar">
             <ElInput
               v-model="searchQuery"
-              placeholder="输入检索内容，回车检索"
+              :placeholder="$t('app.searchPlaceholder')"
               clearable
               @keyup.enter="handleSearch"
             />
             <ElSelect v-model="searchMode" class="mode-select">
-              <ElOption label="混合检索" value="hybrid" />
-              <ElOption label="关键词检索" value="keyword" />
+              <ElOption :label="$t('app.searchHybrid')" value="hybrid" />
+              <ElOption :label="$t('app.searchKeyword')" value="keyword" />
             </ElSelect>
             <ElButton type="primary" :loading="searching" @click="handleSearch">
               <ElIcon><Search /></ElIcon>
-              <span>检索</span>
+              <span>{{ $t('app.searchAction') }}</span>
             </ElButton>
           </div>
 
           <div v-loading="searching" class="result-area">
-            <ElEmpty v-if="!searchResults.length" description="暂无检索结果" />
+            <ElEmpty v-if="!searchResults.length" :description="$t('app.searchEmpty')" />
             <ElScrollbar v-else max-height="460px" class="result-scroll">
               <ElCard
                 v-for="(hit, i) in searchResults"
@@ -37,7 +37,9 @@
                 class="hit-card"
               >
                 <div class="hit-head">
-                  <span class="hit-title">{{ hit.title || hit.scenicSpotName || hit.documentName || '未命名结果' }}</span>
+                  <span class="hit-title">{{
+                    hit.title || hit.scenicSpotName || hit.documentName || $t('app.unnamedResult')
+                  }}</span>
                   <ElTag v-if="hit.score !== undefined" size="small" type="success" effect="light">
                     {{ hit.score.toFixed(3) }}
                   </ElTag>
@@ -56,41 +58,41 @@
       <ElCol :xs="24" :md="12">
         <ElCard shadow="never" class="section-card">
           <template #header>
-            <span class="section-title">问答测试</span>
+            <span class="section-title">{{ $t('app.qaTest') }}</span>
           </template>
           <div class="query-bar">
             <ElInput
               v-model="question"
-              placeholder="输入问题，回车提问"
+              :placeholder="$t('app.qaPlaceholder')"
               clearable
               @keyup.enter="handleAsk"
             />
             <ElButton type="primary" :loading="asking" @click="handleAsk">
               <ElIcon><ChatDotRound /></ElIcon>
-              <span>提问</span>
+              <span>{{ $t('app.ask') }}</span>
             </ElButton>
           </div>
 
           <div v-loading="asking" class="result-area">
-            <ElEmpty v-if="!answer" description="暂无问答结果" />
+            <ElEmpty v-if="!answer" :description="$t('app.qaEmpty')" />
             <div v-else class="answer-block">
               <div class="answer-head">
                 <ElTag v-if="answer.label" type="info" effect="light">{{ answer.label }}</ElTag>
                 <ElTag v-if="answer.scenario" effect="plain">{{ answer.scenario }}</ElTag>
                 <span v-if="answer.latency?.totalMs !== undefined" class="latency">
-                  响应 {{ answer.latency.totalMs }} ms
+                  {{ $t('app.responseMs', { latency: answer.latency.totalMs }) }}
                 </span>
               </div>
               <p class="answer-text">{{ answer.answer }}</p>
               <div v-if="answer.sources?.length" class="sources">
-                <p class="sources-label">来源：</p>
-                <ElTag
-                  v-for="(src, i) in answer.sources"
-                  :key="i"
-                  size="small"
-                  class="source-tag"
-                >
-                  {{ src.sectionTitle || src.scenicSpotName || src.documentName || '未知来源' }}
+                <p class="sources-label">{{ $t('app.sourcesLabel') }}</p>
+                <ElTag v-for="(src, i) in answer.sources" :key="i" size="small" class="source-tag">
+                  {{
+                    src.sectionTitle ||
+                    src.scenicSpotName ||
+                    src.documentName ||
+                    $t('app.unknownSource')
+                  }}
                 </ElTag>
               </div>
             </div>
@@ -102,11 +104,14 @@
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { ChatDotRound, Search } from '@element-plus/icons-vue'
   import { searchKnowledge, type KnowledgeHit } from '@/api/admin'
   import { askQuestion, type ChatAnswer } from '@/api/guide'
 
   defineOptions({ name: 'KnowledgeSearchTest' })
+
+  const { t } = useI18n()
 
   // 知识检索
   const searchQuery = ref('')
@@ -117,16 +122,16 @@
   async function handleSearch() {
     const query = searchQuery.value.trim()
     if (!query) {
-      ElMessage.warning('请输入检索内容')
+      ElMessage.warning(t('app.searchRequired'))
       return
     }
     searching.value = true
     try {
       const res = await searchKnowledge({ query, mode: searchMode.value })
       searchResults.value = res.results || []
-      if (!searchResults.value.length) ElMessage.info('未检索到相关内容')
+      if (!searchResults.value.length) ElMessage.info(t('app.searchNoMatch'))
     } catch {
-      ElMessage.error('检索失败')
+      ElMessage.error(t('app.searchFailed'))
     } finally {
       searching.value = false
     }
@@ -140,14 +145,14 @@
   async function handleAsk() {
     const q = question.value.trim()
     if (!q) {
-      ElMessage.warning('请输入问题')
+      ElMessage.warning(t('app.qaRequired'))
       return
     }
     asking.value = true
     try {
       answer.value = await askQuestion({ question: q })
     } catch {
-      ElMessage.error('问答请求失败')
+      ElMessage.error(t('app.qaFailed'))
     } finally {
       asking.value = false
     }

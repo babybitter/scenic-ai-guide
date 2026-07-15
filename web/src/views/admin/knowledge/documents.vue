@@ -8,25 +8,25 @@
       <ElCol :xs="12" :sm="8" :md="4">
         <ElCard shadow="hover" class="stat-card">
           <p class="stat-value">{{ summary?.documents ?? '-' }}</p>
-          <p class="stat-label">文档数</p>
+          <p class="stat-label">{{ $t('app.docsCount') }}</p>
         </ElCard>
       </ElCol>
       <ElCol :xs="12" :sm="8" :md="4">
         <ElCard shadow="hover" class="stat-card">
           <p class="stat-value">{{ summary?.spots ?? '-' }}</p>
-          <p class="stat-label">景点数</p>
+          <p class="stat-label">{{ $t('app.docsSpotCount') }}</p>
         </ElCard>
       </ElCol>
       <ElCol :xs="12" :sm="8" :md="4">
         <ElCard shadow="hover" class="stat-card">
           <p class="stat-value">{{ summary?.guideSections ?? '-' }}</p>
-          <p class="stat-label">讲解章节</p>
+          <p class="stat-label">{{ $t('app.docsSections') }}</p>
         </ElCard>
       </ElCol>
       <ElCol :xs="12" :sm="8" :md="4">
         <ElCard shadow="hover" class="stat-card">
           <p class="stat-value">{{ summary?.chunks ?? '-' }}</p>
-          <p class="stat-label">知识切片</p>
+          <p class="stat-label">{{ $t('app.docsChunks') }}</p>
         </ElCard>
       </ElCol>
       <ElCol :xs="12" :sm="8" :md="4">
@@ -37,7 +37,7 @@
             </template>
             <template v-else>-</template>
           </p>
-          <p class="stat-label">知识范围</p>
+          <p class="stat-label">{{ $t('app.docsScope') }}</p>
         </ElCard>
       </ElCol>
       <ElCol :xs="12" :sm="8" :md="4">
@@ -45,7 +45,7 @@
           <ElTag :type="summary?.status === 'ready' ? 'success' : 'info'" effect="light">
             {{ summary?.status || '-' }}
           </ElTag>
-          <p class="stat-label">状态</p>
+          <p class="stat-label">{{ $t('app.status') }}</p>
         </ElCard>
       </ElCol>
     </ElRow>
@@ -62,19 +62,19 @@
           >
             <ElButton type="primary" :loading="uploading">
               <ElIcon><UploadFilled /></ElIcon>
-              <span>上传文档</span>
+              <span>{{ $t('app.docsUpload') }}</span>
             </ElButton>
           </ElUpload>
-          <span class="accept-tip">支持 .docx / .xlsx / .txt / .md / .pdf</span>
+          <span class="accept-tip">{{ $t('app.docsSupported') }}</span>
         </div>
         <div class="action-right">
           <ElButton :loading="loading" @click="refresh">
             <ElIcon><Refresh /></ElIcon>
-            <span>刷新</span>
+            <span>{{ $t('app.refresh') }}</span>
           </ElButton>
           <ElButton type="warning" :loading="rebuilding" @click="handleRebuild">
             <ElIcon><Refresh /></ElIcon>
-            <span>重建知识库</span>
+            <span>{{ $t('app.docsRebuild') }}</span>
           </ElButton>
         </div>
       </div>
@@ -83,20 +83,30 @@
     <!-- 上传文档列表 -->
     <ElCard shadow="never" class="table-card">
       <ElTable v-loading="loading" :data="uploads" stripe border>
-        <ElTableColumn prop="fileName" label="文件名" min-width="200" show-overflow-tooltip />
-        <ElTableColumn prop="fileType" label="类型" width="110" />
-        <ElTableColumn label="大小" width="110">
+        <ElTableColumn
+          prop="fileName"
+          :label="$t('app.fileName')"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <ElTableColumn prop="fileType" :label="$t('app.type')" width="110" />
+        <ElTableColumn :label="$t('app.size')" width="110">
           <template #default="{ row }">{{ formatSize(row.size) }}</template>
         </ElTableColumn>
-        <ElTableColumn label="状态" width="110">
+        <ElTableColumn :label="$t('app.status')" width="110">
           <template #default="{ row }">
             <ElTag :type="statusType(row.status)" effect="light">{{ row.status }}</ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="chunkCount" label="切片数" width="100" align="center" />
-        <ElTableColumn prop="createdAt" label="上传时间" min-width="180" />
+        <ElTableColumn
+          prop="chunkCount"
+          :label="$t('app.docsChunkCount')"
+          width="100"
+          align="center"
+        />
+        <ElTableColumn prop="createdAt" :label="$t('app.uploadTime')" min-width="180" />
         <template #empty>
-          <ElEmpty description="暂无上传文档" />
+          <ElEmpty :description="$t('app.docsEmpty')" />
         </template>
       </ElTable>
     </ElCard>
@@ -106,6 +116,7 @@
 <script setup lang="ts">
   import { Refresh, UploadFilled } from '@element-plus/icons-vue'
   import { ElMessageBox } from 'element-plus'
+  import { useI18n } from 'vue-i18n'
   import {
     getKnowledgeSummary,
     getUploads,
@@ -117,13 +128,13 @@
 
   defineOptions({ name: 'KnowledgeDocuments' })
 
+  const { t } = useI18n()
+
   const summary = ref<KnowledgeSummary | null>(null)
   const uploads = ref<UploadRecord[]>([])
 
   // 知识范围按空白拆分为多行展示（如「灵山胜境」「拈花湾禅意小镇」各占一行）
-  const scopeLines = computed(() =>
-    (summary.value?.scope || '').split(/\s+/).filter(Boolean)
-  )
+  const scopeLines = computed(() => (summary.value?.scope || '').split(/\s+/).filter(Boolean))
   const loading = ref(false)
   const rebuilding = ref(false)
   const uploading = ref(false)
@@ -144,7 +155,7 @@
     try {
       summary.value = await getKnowledgeSummary()
     } catch {
-      ElMessage.error('知识库概览加载失败')
+      ElMessage.error(t('app.docsSummaryFailed'))
     }
   }
 
@@ -153,7 +164,7 @@
     try {
       uploads.value = await getUploads()
     } catch {
-      ElMessage.error('文档列表加载失败')
+      ElMessage.error(t('app.docsListFailed'))
     } finally {
       loading.value = false
     }
@@ -165,10 +176,10 @@
 
   async function handleRebuild() {
     try {
-      await ElMessageBox.confirm('确定要重建知识库吗？该操作会重新解析全部文档。', '重建知识库', {
+      await ElMessageBox.confirm(t('app.docsRebuildConfirm'), t('app.docsRebuild'), {
         type: 'warning',
-        confirmButtonText: '确定重建',
-        cancelButtonText: '取消'
+        confirmButtonText: t('app.docsConfirmRebuild'),
+        cancelButtonText: t('app.cancel')
       })
     } catch {
       return
@@ -176,10 +187,10 @@
     rebuilding.value = true
     try {
       await rebuildKnowledge()
-      ElMessage.success('知识库重建已完成')
+      ElMessage.success(t('app.docsRebuildDone'))
       await refresh()
     } catch {
-      ElMessage.error('知识库重建失败')
+      ElMessage.error(t('app.docsRebuildFailed'))
     } finally {
       rebuilding.value = false
     }
@@ -209,10 +220,10 @@
         mimeType: raw.type || 'application/octet-stream',
         contentBase64
       })
-      ElMessage.success('文档上传成功')
+      ElMessage.success(t('app.docsUploadDone'))
       await refresh()
     } catch {
-      ElMessage.error('文档上传失败')
+      ElMessage.error(t('app.docsUploadFailed'))
     } finally {
       uploading.value = false
     }

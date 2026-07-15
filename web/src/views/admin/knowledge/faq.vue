@@ -5,15 +5,15 @@
   <div class="kn-faq">
     <ElCard shadow="never" class="toolbar-card">
       <div class="toolbar">
-        <span class="title">FAQ 管理</span>
+        <span class="title">{{ $t('app.faqTitle') }}</span>
         <div class="ops">
           <ElButton :loading="loading" @click="loadFaqs">
             <ElIcon><Refresh /></ElIcon>
-            <span>刷新</span>
+            <span>{{ $t('app.refresh') }}</span>
           </ElButton>
           <ElButton type="primary" @click="openCreate">
             <ElIcon><Plus /></ElIcon>
-            <span>新增</span>
+            <span>{{ $t('app.add') }}</span>
           </ElButton>
         </div>
       </div>
@@ -21,67 +21,104 @@
 
     <ElCard shadow="never">
       <ElTable v-loading="loading" :data="faqs" stripe border>
-        <ElTableColumn prop="question" label="问题" min-width="200" show-overflow-tooltip />
-        <ElTableColumn prop="answer" label="答案" min-width="240" show-overflow-tooltip />
-        <ElTableColumn label="关键词" min-width="180">
+        <ElTableColumn
+          prop="question"
+          :label="$t('app.faqQuestion')"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <ElTableColumn
+          prop="answer"
+          :label="$t('app.faqAnswer')"
+          min-width="240"
+          show-overflow-tooltip
+        />
+        <ElTableColumn :label="$t('app.faqKeywords')" min-width="180">
           <template #default="{ row }">
-            <ElTag v-for="kw in row.keywords" :key="kw" size="small" type="info" class="kw-tag">{{ kw }}</ElTag>
+            <ElTag v-for="kw in row.keywords" :key="kw" size="small" type="info" class="kw-tag">{{
+              kw
+            }}</ElTag>
             <span v-if="!row.keywords?.length" class="muted">-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="priority" label="优先级" width="100" align="center" sortable />
-        <ElTableColumn label="启用" width="90" align="center">
+        <ElTableColumn
+          prop="priority"
+          :label="$t('app.faqPriority')"
+          width="100"
+          align="center"
+          sortable
+        />
+        <ElTableColumn :label="$t('app.enabled')" width="90" align="center">
           <template #default="{ row }">
-            <ElSwitch v-model="row.enabled" :loading="row.__toggling" @change="(val) => handleToggle(row, Boolean(val))" />
+            <ElSwitch
+              v-model="row.enabled"
+              :loading="row.__toggling"
+              @change="(val) => handleToggle(row, Boolean(val))"
+            />
           </template>
         </ElTableColumn>
-        <ElTableColumn label="操作" width="120" fixed="right">
+        <ElTableColumn :label="$t('app.actions')" width="120" fixed="right">
           <template #default="{ row }">
             <ElButton type="primary" link @click="openEdit(row)">
               <ElIcon><Edit /></ElIcon>
-              <span>编辑</span>
+              <span>{{ $t('app.edit') }}</span>
             </ElButton>
           </template>
         </ElTableColumn>
         <template #empty>
-          <ElEmpty description="暂无 FAQ 数据" />
+          <ElEmpty :description="$t('app.faqEmpty')" />
         </template>
       </ElTable>
     </ElCard>
 
     <!-- 新增 / 编辑弹窗 -->
-    <ElDialog v-model="dialogVisible" :title="isEdit ? '编辑 FAQ' : '新增 FAQ'" width="620px" @closed="resetForm">
+    <ElDialog
+      v-model="dialogVisible"
+      :title="isEdit ? $t('app.faqEdit') : $t('app.faqAdd')"
+      width="620px"
+      @closed="resetForm"
+    >
       <ElForm ref="formRef" :model="form" :rules="rules" label-width="88px">
-        <ElFormItem label="问题" prop="question">
-          <ElInput v-model="form.question" placeholder="请输入问题" />
+        <ElFormItem :label="$t('app.faqQuestion')" prop="question">
+          <ElInput v-model="form.question" :placeholder="$t('app.faqQuestionPlaceholder')" />
         </ElFormItem>
-        <ElFormItem label="答案" prop="answer">
-          <ElInput v-model="form.answer" type="textarea" :rows="4" placeholder="请输入答案" />
+        <ElFormItem :label="$t('app.faqAnswer')" prop="answer">
+          <ElInput
+            v-model="form.answer"
+            type="textarea"
+            :rows="4"
+            :placeholder="$t('app.faqAnswerPlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="关键词">
-          <ElInput v-model="keywordsText" placeholder="多个关键词以逗号分隔" />
+        <ElFormItem :label="$t('app.faqKeywords')">
+          <ElInput v-model="keywordsText" :placeholder="$t('app.faqKeywordsPlaceholder')" />
         </ElFormItem>
-        <ElFormItem label="优先级">
+        <ElFormItem :label="$t('app.faqPriority')">
           <ElInputNumber v-model="form.priority" :min="0" :max="999" />
         </ElFormItem>
-        <ElFormItem label="启用">
+        <ElFormItem :label="$t('app.enabled')">
           <ElSwitch v-model="form.enabled" />
         </ElFormItem>
       </ElForm>
       <template #footer>
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" :loading="saving" @click="handleSave">保存</ElButton>
+        <ElButton @click="dialogVisible = false">{{ $t('app.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="saving" @click="handleSave">{{
+          $t('app.save')
+        }}</ElButton>
       </template>
     </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
+  import { useI18n } from 'vue-i18n'
   import { Edit, Plus, Refresh } from '@element-plus/icons-vue'
   import type { FormInstance, FormRules } from 'element-plus'
   import { createAdminFaq, getAdminFaqs, updateAdminFaq, type AdminFaq } from '@/api/admin'
 
   defineOptions({ name: 'KnowledgeFaq' })
+
+  const { t } = useI18n()
 
   type FaqRow = AdminFaq & { __toggling?: boolean }
 
@@ -109,8 +146,8 @@
   const form = reactive<FaqForm>(emptyForm())
 
   const rules: FormRules = {
-    question: [{ required: true, message: '请输入问题', trigger: 'blur' }],
-    answer: [{ required: true, message: '请输入答案', trigger: 'blur' }]
+    question: [{ required: true, message: t('app.faqQuestionPlaceholder'), trigger: 'blur' }],
+    answer: [{ required: true, message: t('app.faqAnswerPlaceholder'), trigger: 'blur' }]
   }
 
   function parseKeywords(text: string): string[] {
@@ -126,7 +163,7 @@
       const data = await getAdminFaqs()
       faqs.value = (data || []).map((item) => ({ ...item, __toggling: false }))
     } catch {
-      ElMessage.error('FAQ 列表加载失败')
+      ElMessage.error(t('app.faqListFailed'))
     } finally {
       loading.value = false
     }
@@ -170,15 +207,15 @@
     try {
       if (isEdit.value) {
         await updateAdminFaq(editingId.value, payload)
-        ElMessage.success('FAQ 更新成功')
+        ElMessage.success(t('app.faqUpdated'))
       } else {
         await createAdminFaq(payload)
-        ElMessage.success('FAQ 创建成功')
+        ElMessage.success(t('app.faqCreated'))
       }
       dialogVisible.value = false
       await loadFaqs()
     } catch {
-      ElMessage.error(isEdit.value ? 'FAQ 更新失败' : 'FAQ 创建失败')
+      ElMessage.error(isEdit.value ? t('app.faqUpdateFailed') : t('app.faqCreateFailed'))
     } finally {
       saving.value = false
     }
@@ -188,10 +225,10 @@
     row.__toggling = true
     try {
       await updateAdminFaq(row.id, { enabled: val })
-      ElMessage.success(val ? '已启用' : '已停用')
+      ElMessage.success(val ? t('app.statusEnabled') : t('app.statusDisabled'))
     } catch {
       row.enabled = !val
-      ElMessage.error('状态更新失败')
+      ElMessage.error(t('app.statusUpdateFailed'))
     } finally {
       row.__toggling = false
     }

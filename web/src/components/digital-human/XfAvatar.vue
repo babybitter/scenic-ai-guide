@@ -12,7 +12,7 @@
       <!-- 降级 / 加载态 -->
       <div v-if="!isStreaming" class="dh-fallback">
         <ElIcon class="dh-fallback-icon" :size="46"><Avatar /></ElIcon>
-        <p class="dh-fallback-name">{{ config?.name || '灵山 AI 导游' }}</p>
+        <p class="dh-fallback-name">{{ config?.name || $t('app.avatarGuideName') }}</p>
         <p class="dh-fallback-tip">{{ fallbackTip }}</p>
       </div>
 
@@ -23,8 +23,14 @@
       </div>
 
       <!-- 音频解锁提示：浏览器拦截自动播放时，点击开启声音 -->
-      <div v-if="isStreaming && !avatar.audioReady.value" class="dh-audio-mask" @click="enableAudio">
-        <ElButton type="primary" round :icon="Microphone">点击开启数字人声音</ElButton>
+      <div
+        v-if="isStreaming && !avatar.audioReady.value"
+        class="dh-audio-mask"
+        @click="enableAudio"
+      >
+        <ElButton type="primary" round :icon="Microphone">{{
+          $t('app.avatarEnableAudio')
+        }}</ElButton>
       </div>
     </div>
   </div>
@@ -32,11 +38,14 @@
 
 <script setup lang="ts">
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { Avatar, Microphone } from '@element-plus/icons-vue'
   import { useXfAvatar } from '@/composables/useXfAvatar'
   import type { DigitalHumanConfig } from '@/api/digital-human'
 
   defineOptions({ name: 'XfAvatar' })
+
+  const { t } = useI18n()
 
   const props = defineProps<{ config: DigitalHumanConfig | null }>()
   const emit = defineEmits<{
@@ -53,31 +62,34 @@
   const statusText = computed(() => {
     switch (avatar.status.value) {
       case 'connecting':
-        return '连接中'
+        return t('app.avatarConnecting')
       case 'ready':
-        return '在线'
+        return t('app.avatarOnline')
       case 'speaking':
-        return '讲解中'
+        return t('app.avatarSpeaking')
       case 'error':
-        return '文本模式'
+        return t('app.avatarTextMode')
       default:
-        return '待机'
+        return t('app.avatarIdle')
     }
   })
 
   const fallbackTip = computed(() => {
-    if (avatar.status.value === 'connecting') return '数字人正在接入…'
+    if (avatar.status.value === 'connecting') return t('app.guideConnecting')
     if (avatar.status.value === 'error')
-      return avatar.errorMessage.value || '数字人不可用，已切换为文本模式'
-    if (config.value && config.value.serviceStatus === 'text_only') return '当前为纯文本讲解模式'
-    return '数字人准备中…'
+      return avatar.errorMessage.value || t('app.guideUnavailable')
+    if (config.value && config.value.serviceStatus === 'text_only') return t('app.avatarTextOnly')
+    return t('app.avatarPreparing')
   })
 
   async function init() {
     // 纯文本模式或无可用形象：不启动流，直接降级
-    if (config.value && (config.value.serviceStatus === 'text_only' || !config.value.assetAvailable)) {
+    if (
+      config.value &&
+      (config.value.serviceStatus === 'text_only' || !config.value.assetAvailable)
+    ) {
       avatar.status.value = 'error'
-      avatar.errorMessage.value = '当前为纯文本讲解模式'
+      avatar.errorMessage.value = t('app.avatarTextOnly')
       emit('ready', config.value)
       return
     }
@@ -109,7 +121,14 @@
     return avatar.interrupt()
   }
 
-  defineExpose({ speak, enableAudio, interrupt, status: avatar.status, audioReady: avatar.audioReady, config })
+  defineExpose({
+    speak,
+    enableAudio,
+    interrupt,
+    status: avatar.status,
+    audioReady: avatar.audioReady,
+    config
+  })
 
   onMounted(init)
   onBeforeUnmount(() => avatar.destroy())

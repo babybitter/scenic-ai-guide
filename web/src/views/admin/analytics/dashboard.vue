@@ -9,17 +9,17 @@
       <div class="filter-bar">
         <div class="filter-left">
           <div class="filter-item">
-            <span class="filter-label">性别</span>
+            <span class="filter-label">{{ $t('app.analyticsGender') }}</span>
             <ElSelect v-model="filters.gender" class="filter-select" @change="reload">
-              <ElOption label="全部" value="all" />
-              <ElOption label="男" value="male" />
-              <ElOption label="女" value="female" />
+              <ElOption :label="$t('app.analyticsAll')" value="all" />
+              <ElOption :label="$t('app.analyticsMale')" value="male" />
+              <ElOption :label="$t('app.analyticsFemale')" value="female" />
             </ElSelect>
           </div>
           <div class="filter-item">
-            <span class="filter-label">年龄段</span>
+            <span class="filter-label">{{ $t('app.analyticsAge') }}</span>
             <ElSelect v-model="filters.ageBand" class="filter-select" @change="reload">
-              <ElOption label="全部" value="all" />
+              <ElOption :label="$t('app.analyticsAll')" value="all" />
               <ElOption label="18-24" value="18-24" />
               <ElOption label="25-34" value="25-34" />
               <ElOption label="35-44" value="35-44" />
@@ -28,22 +28,22 @@
             </ElSelect>
           </div>
           <div class="filter-item">
-            <span class="filter-label">最低满意度</span>
+            <span class="filter-label">{{ $t('app.analyticsMinSatisfaction') }}</span>
             <ElSelect v-model="filters.minSatisfaction" class="filter-select" @change="reload">
-              <ElOption label="全部" value="all" />
-              <ElOption label="3 分及以上" value="3" />
-              <ElOption label="4 分及以上" value="4" />
-              <ElOption label="5 分" value="5" />
+              <ElOption :label="$t('app.analyticsAll')" value="all" />
+              <ElOption :label="$t('app.analyticsThreePlus')" value="3" />
+              <ElOption :label="$t('app.analyticsFourPlus')" value="4" />
+              <ElOption :label="$t('app.analyticsFive')" value="5" />
             </ElSelect>
           </div>
         </div>
         <div class="filter-right">
           <span v-if="dashboard?.generatedAt" class="generated-at">
-            更新于 {{ dashboard.generatedAt }}
+            {{ $t('app.analyticsUpdated', { time: dashboard.generatedAt }) }}
           </span>
-          <ElButton :loading="loading" @click="reload">刷新数据</ElButton>
+          <ElButton :loading="loading" @click="reload">{{ $t('app.analyticsRefresh') }}</ElButton>
           <ElButton type="primary" :loading="importing" @click="handleImport">
-            重新导入Excel数据
+            {{ $t('app.analyticsImport') }}
           </ElButton>
         </div>
       </div>
@@ -53,7 +53,9 @@
     <ElRow :gutter="16" class="kpi-row">
       <ElCol v-for="kpi in kpiCards" :key="kpi.label" :xs="12" :sm="8" :md="4">
         <ElCard shadow="hover" class="kpi-card">
-          <p class="kpi-value">{{ kpi.value }}<span v-if="kpi.suffix" class="kpi-suffix">{{ kpi.suffix }}</span></p>
+          <p class="kpi-value"
+            >{{ kpi.value }}<span v-if="kpi.suffix" class="kpi-suffix">{{ kpi.suffix }}</span></p
+          >
           <p class="kpi-label">{{ kpi.label }}</p>
         </ElCard>
       </ElCol>
@@ -63,43 +65,83 @@
     <ElRow :gutter="16" class="chart-row">
       <ElCol :xs="24" :md="12" :lg="8">
         <ElCard shadow="never" class="chart-card">
-          <template #header><span class="chart-title">热门问答 Top</span></template>
-          <ElEmpty v-if="!dashboard?.hotQuestions?.length" description="暂无数据" :image-size="80" />
-          <div v-show="dashboard?.hotQuestions?.length" ref="hotQuestionsEl" class="chart-box"></div>
+          <template #header
+            ><span class="chart-title">{{ $t('app.analyticsHotQuestions') }}</span></template
+          >
+          <ElEmpty
+            v-if="!dashboard?.hotQuestions?.length"
+            :description="$t('app.noData')"
+            :image-size="80"
+          />
+          <div
+            v-show="dashboard?.hotQuestions?.length"
+            ref="hotQuestionsEl"
+            class="chart-box"
+          ></div>
         </ElCard>
       </ElCol>
       <ElCol :xs="24" :md="12" :lg="8">
         <ElCard shadow="never" class="chart-card">
-          <template #header><span class="chart-title">景点关注热度</span></template>
-          <ElEmpty v-if="!dashboard?.spotFocus?.length" description="暂无数据" :image-size="80" />
+          <template #header
+            ><span class="chart-title">{{ $t('app.analyticsSpotFocus') }}</span></template
+          >
+          <ElEmpty
+            v-if="!dashboard?.spotFocus?.length"
+            :description="$t('app.noData')"
+            :image-size="80"
+          />
           <div v-show="dashboard?.spotFocus?.length" ref="spotFocusEl" class="chart-box"></div>
         </ElCard>
       </ElCol>
       <ElCol :xs="24" :md="12" :lg="8">
         <ElCard shadow="never" class="chart-card">
-          <template #header><span class="chart-title">情感分布</span></template>
-          <ElEmpty v-if="!dashboard?.emotionTrend?.length" description="暂无数据" :image-size="80" />
+          <template #header
+            ><span class="chart-title">{{ $t('app.analyticsEmotion') }}</span></template
+          >
+          <ElEmpty
+            v-if="!dashboard?.emotionTrend?.length"
+            :description="$t('app.noData')"
+            :image-size="80"
+          />
           <div v-show="dashboard?.emotionTrend?.length" ref="emotionEl" class="chart-box"></div>
         </ElCard>
       </ElCol>
       <ElCol :xs="24" :md="12" :lg="8">
         <ElCard shadow="never" class="chart-card">
-          <template #header><span class="chart-title">消费结构占比</span></template>
-          <ElEmpty v-if="!hasConsumption" description="暂无数据" :image-size="80" />
+          <template #header
+            ><span class="chart-title">{{ $t('app.analyticsConsumption') }}</span></template
+          >
+          <ElEmpty v-if="!hasConsumption" :description="$t('app.noData')" :image-size="80" />
           <div v-show="hasConsumption" ref="consumptionEl" class="chart-box"></div>
         </ElCard>
       </ElCol>
       <ElCol :xs="24" :md="12" :lg="8">
         <ElCard shadow="never" class="chart-card">
-          <template #header><span class="chart-title">人群年龄分布</span></template>
-          <ElEmpty v-if="!dashboard?.persona?.ageBands?.length" description="暂无数据" :image-size="80" />
-          <div v-show="dashboard?.persona?.ageBands?.length" ref="ageBandsEl" class="chart-box"></div>
+          <template #header
+            ><span class="chart-title">{{ $t('app.analyticsAgeDistribution') }}</span></template
+          >
+          <ElEmpty
+            v-if="!dashboard?.persona?.ageBands?.length"
+            :description="$t('app.noData')"
+            :image-size="80"
+          />
+          <div
+            v-show="dashboard?.persona?.ageBands?.length"
+            ref="ageBandsEl"
+            class="chart-box"
+          ></div>
         </ElCard>
       </ElCol>
       <ElCol :xs="24" :md="12" :lg="8">
         <ElCard shadow="never" class="chart-card">
-          <template #header><span class="chart-title">性别分布</span></template>
-          <ElEmpty v-if="!dashboard?.persona?.genders?.length" description="暂无数据" :image-size="80" />
+          <template #header
+            ><span class="chart-title">{{ $t('app.analyticsGenderDistribution') }}</span></template
+          >
+          <ElEmpty
+            v-if="!dashboard?.persona?.genders?.length"
+            :description="$t('app.noData')"
+            :image-size="80"
+          />
           <div v-show="dashboard?.persona?.genders?.length" ref="gendersEl" class="chart-box"></div>
         </ElCard>
       </ElCol>
@@ -107,8 +149,14 @@
 
     <!-- 运营建议 -->
     <ElCard shadow="never" class="suggestion-card">
-      <template #header><span class="chart-title">运营建议</span></template>
-      <ElEmpty v-if="!dashboard?.suggestions?.length" description="暂无运营建议" :image-size="80" />
+      <template #header
+        ><span class="chart-title">{{ $t('app.analyticsSuggestions') }}</span></template
+      >
+      <ElEmpty
+        v-if="!dashboard?.suggestions?.length"
+        :description="$t('app.analyticsNoSuggestions')"
+        :image-size="80"
+      />
       <ul v-else class="suggestion-list">
         <li v-for="(item, index) in dashboard.suggestions" :key="index" class="suggestion-item">
           <span class="suggestion-dot"></span>
@@ -121,9 +169,12 @@
 
 <script setup lang="ts">
   import * as echarts from 'echarts'
+  import { useI18n } from 'vue-i18n'
   import { getDashboard, importAnalytics, type DashboardData } from '@/api/admin'
 
   defineOptions({ name: 'AnalyticsDashboard' })
+
+  const { t } = useI18n()
 
   // 景区 / 禅意主题配色
   const PALETTE = ['#135158', '#1c6b6b', '#d4af37', '#3dcd9f', '#8bb8a0', '#c98f2e']
@@ -144,12 +195,20 @@
   const kpiCards = computed(() => {
     const m = dashboard.value?.metrics
     return [
-      { label: '今日服务人次', value: m?.todayServiceCount ?? 0, suffix: '' },
-      { label: '本周服务人次', value: m?.weekServiceCount ?? 0, suffix: '' },
-      { label: '累计问答数', value: m?.totalQuestions ?? 0, suffix: '' },
-      { label: '平均满意度', value: (m?.averageSatisfaction ?? 0).toFixed(1), suffix: '' },
-      { label: '平均响应时长', value: Math.round(m?.averageLatencyMs ?? 0), suffix: 'ms' },
-      { label: '行为样本数', value: m?.behaviorRows ?? 0, suffix: '' }
+      { label: t('app.analyticsToday'), value: m?.todayServiceCount ?? 0, suffix: '' },
+      { label: t('app.analyticsWeek'), value: m?.weekServiceCount ?? 0, suffix: '' },
+      { label: t('app.analyticsQuestions'), value: m?.totalQuestions ?? 0, suffix: '' },
+      {
+        label: t('app.analyticsAverageSatisfaction'),
+        value: (m?.averageSatisfaction ?? 0).toFixed(1),
+        suffix: ''
+      },
+      {
+        label: t('app.analyticsLatency'),
+        value: Math.round(m?.averageLatencyMs ?? 0),
+        suffix: 'ms'
+      },
+      { label: t('app.analyticsSamples'), value: m?.behaviorRows ?? 0, suffix: '' }
     ]
   })
 
@@ -243,7 +302,10 @@
     }
   }
 
-  function pieOption(items: { label: string; value: number }[], radius: [string, string] = ['40%', '68%']) {
+  function pieOption(
+    items: { label: string; value: number }[],
+    radius: [string, string] = ['40%', '68%']
+  ) {
     return {
       color: PALETTE,
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', confine: true },
@@ -265,11 +327,11 @@
   function consumptionItems(): { label: string; value: number }[] {
     const c = dashboard.value?.consumption ?? {}
     return [
-      { label: '门票', value: Number(c.ticketCost) || 0 },
-      { label: '餐饮', value: Number(c.foodCost) || 0 },
-      { label: '购物', value: Number(c.shoppingCost) || 0 },
-      { label: '交通', value: Number(c.transportCost) || 0 },
-      { label: '娱乐', value: Number(c.entertainmentCost) || 0 }
+      { label: t('app.analyticsTickets'), value: Number(c.ticketCost) || 0 },
+      { label: t('app.analyticsFood'), value: Number(c.foodCost) || 0 },
+      { label: t('app.analyticsShopping'), value: Number(c.shoppingCost) || 0 },
+      { label: t('app.analyticsTransport'), value: Number(c.transportCost) || 0 },
+      { label: t('app.analyticsEntertainment'), value: Number(c.entertainmentCost) || 0 }
     ].filter((i) => i.value > 0)
   }
 
@@ -288,13 +350,19 @@
       ensureChart('emotion', emotionEl.value)?.setOption(pieOption(d.emotionTrend), true)
     }
     if (hasConsumption.value) {
-      ensureChart('consumption', consumptionEl.value)?.setOption(pieOption(consumptionItems()), true)
+      ensureChart('consumption', consumptionEl.value)?.setOption(
+        pieOption(consumptionItems()),
+        true
+      )
     }
     if (d.persona?.ageBands?.length) {
       ensureChart('ageBands', ageBandsEl.value)?.setOption(barOption(d.persona.ageBands), true)
     }
     if (d.persona?.genders?.length) {
-      ensureChart('genders', gendersEl.value)?.setOption(pieOption(d.persona.genders, ['0%', '62%']), true)
+      ensureChart('genders', gendersEl.value)?.setOption(
+        pieOption(d.persona.genders, ['0%', '62%']),
+        true
+      )
     }
   }
 
@@ -314,7 +382,7 @@
       await nextTick()
       renderCharts()
     } catch {
-      ElMessage.error('数据大屏加载失败')
+      ElMessage.error(t('app.analyticsLoadFailed'))
     } finally {
       loading.value = false
     }
@@ -324,10 +392,10 @@
     importing.value = true
     try {
       await importAnalytics()
-      ElMessage.success('Excel 数据导入成功')
+      ElMessage.success(t('app.analyticsImportDone'))
       await reload()
     } catch {
-      ElMessage.error('Excel 数据导入失败')
+      ElMessage.error(t('app.analyticsImportFailed'))
     } finally {
       importing.value = false
     }

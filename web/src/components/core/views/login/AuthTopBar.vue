@@ -95,6 +95,7 @@
     if (locale.value === lang) return
     locale.value = lang
     userStore.setLanguage(lang)
+    document.documentElement.lang = lang
   }
 
   const changeThemeColor = (color: string) => {
