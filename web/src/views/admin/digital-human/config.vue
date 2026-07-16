@@ -1,12 +1,6 @@
 <!-- 数字人配置：形象(avatar_id)、音色(vcn)、欢迎语、情绪风格、服务状态；启用项下发到游客端。 -->
 <template>
   <div class="dh-config">
-    <ElCard shadow="never" class="hint-card">
-      <p class="hint">
-        {{ $t('app.dhHint') }}
-      </p>
-    </ElCard>
-
     <div class="toolbar">
       <ElButton type="primary" @click="openCreate">{{ $t('app.dhCreate') }}</ElButton>
       <ElButton @click="load">{{ $t('app.refresh') }}</ElButton>
@@ -178,6 +172,12 @@
         <ElButton type="primary" :loading="saving" @click="save">{{ $t('app.save') }}</ElButton>
       </template>
     </ElDialog>
+
+    <ElCard shadow="never" class="hint-card">
+      <p class="hint">
+        {{ $t('app.dhHint') }}
+      </p>
+    </ElCard>
   </div>
 </template>
 
@@ -347,7 +347,7 @@
   }
 
   .hint-card {
-    margin-bottom: 12px;
+    margin-top: 12px;
   }
 
   .hint {
