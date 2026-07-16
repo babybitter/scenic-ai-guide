@@ -1479,49 +1479,61 @@ const catalog = {
     'ガイド女性音声'
   ],
   dhVoiceGuideMale: ['导览男声', 'Guide male', '가이드 남성 음성', '導覽男聲', 'ガイド男性音声'],
-  dhAvatarReceptionMale: ['展厅接待男', 'Reception male', '리셉션 남성', '展廳接待男', '受付男性'],
+  dhAvatarReceptionMale: [
+    '景行·灵山迎宾使',
+    'Jingxing · Lingshan Host',
+    '징싱 · 링산 환영 안내자',
+    '景行·靈山迎賓使',
+    '景行・霊山おもてなし案内人'
+  ],
   dhAvatarReceptionFemale: [
-    '展厅接待女',
-    'Reception female',
-    '리셉션 여성',
-    '展廳接待女',
-    '受付女性'
+    '灵悦·莲心礼宾使',
+    'Lingyue · Lotus Host',
+    '링웨 · 연꽃 의전 안내자',
+    '靈悅·蓮心禮賓使',
+    '霊悦・蓮心コンシェルジュ'
   ],
   dhAvatarScenicA: [
-    '景区导览形象一',
-    'Scenic guide A',
-    '관광 가이드 A',
-    '景區導覽形象一',
-    '観光ガイド A'
+    '云觉·大佛文化使',
+    'Yunjue · Grand Buddha Storyteller',
+    '윈줴 · 대불 문화 해설사',
+    '雲覺·大佛文化使',
+    '雲覚・大仏文化ナビゲーター'
   ],
   dhAvatarScenicB: [
-    '景区导览形象二',
-    'Scenic guide B',
-    '관광 가이드 B',
-    '景區導覽形象二',
-    '観光ガイド B'
+    '梵音·梵宫导览使',
+    'Fanyin · Brahma Palace Guide',
+    '판인 · 범궁 안내자',
+    '梵音·梵宮導覽使',
+    '梵音・梵宮ガイド'
   ],
   dhModelHaru: [
-    '春 Haru（女）',
-    'Haru (female)',
-    'Haru (여성)',
-    '春 Haru（女）',
-    '春 Haru（女性）'
+    '春和·九龙灵使',
+    'Chunhe · Nine Dragons Guide',
+    '춘허 · 구룡 관욕 안내자',
+    '春和·九龍靈使',
+    '春和・九龍灌浴ガイド'
   ],
   dhModelHiyori: [
-    '日和 Hiyori（女）',
-    'Hiyori (female)',
-    'Hiyori (여성)',
-    '日和 Hiyori（女）',
-    '日和 Hiyori（女性）'
+    '晴音·莲华旅伴',
+    'Qingyin · Lotus Journey Companion',
+    '칭인 · 연화 여행 동반자',
+    '晴音·蓮華旅伴',
+    '晴音・蓮華の旅パートナー'
   ],
-  dhModelKei: ['圭 Kei（男）', 'Kei (male)', 'Kei (남성)', '圭 Kei（男）', '圭 Kei（男性）'],
+  dhModelKei: [
+    '知远·坛城研学使',
+    'Zhiyuan · Mandala Learning Guide',
+    '즈위안 · 만다라 학습 안내자',
+    '知遠·壇城研學使',
+    '知遠・曼荼羅学習ガイド'
+  ],
   dhModelHibiki: [
-    '响 Hibiki（男）',
-    'Hibiki (male)',
-    'Hibiki (남성)',
-    '響 Hibiki（男）',
-    '響 Hibiki（男性）'
+    '清响·禅旅伙伴',
+    'Qingxiang · Zen Journey Companion',
+    '칭샹 · 선 여행 동반자',
+    '清響·禪旅夥伴',
+    '清響・禅の旅パートナー'
   ],
 
   avatarConnecting: ['连接中', 'Connecting', '연결 중', '連線中', '接続中'],
