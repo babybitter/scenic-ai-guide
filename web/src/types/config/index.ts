@@ -99,7 +99,12 @@ export interface FastEnterBaseItem {
   routeName?: string
   /** 外部链接 */
   link?: string
+  /** 项目名称的国际化键 */
+  nameI18nKey?: string
 }
+
+// 快速入口内置操作
+export type FastEnterAction = 'generateDemoData'
 
 // 快速入口应用项
 export interface FastEnterApplication extends FastEnterBaseItem {
@@ -109,6 +114,10 @@ export interface FastEnterApplication extends FastEnterBaseItem {
   icon: string
   /** 图标颜色 */
   iconColor: string
+  /** 项目描述的国际化键 */
+  descriptionI18nKey?: string
+  /** 点击时执行的内置操作 */
+  action?: FastEnterAction
 }
 
 // 快速链接项

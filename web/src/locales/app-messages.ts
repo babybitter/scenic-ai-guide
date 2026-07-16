@@ -73,6 +73,78 @@ const catalog = {
   name: ['名称', 'Name', '이름', '名稱', '名称'],
   status: ['状态', 'Status', '상태', '狀態', 'ステータス'],
   noData: ['暂无数据', 'No data', '데이터 없음', '暫無資料', 'データがありません'],
+  demoDataName: ['测试数据', 'Demo Data', '테스트 데이터', '測試資料', 'テストデータ'],
+  demoDataDescription: [
+    '随机生成全量演示数据',
+    'Generate a complete random demo dataset',
+    '전체 무작위 데모 데이터 생성',
+    '隨機產生完整展示資料',
+    'ランダムなデモデータを一式生成'
+  ],
+  demoDataConfirmTitle: [
+    '生成测试数据',
+    'Generate demo data',
+    '테스트 데이터 생성',
+    '產生測試資料',
+    'テストデータを生成'
+  ],
+  demoDataConfirmMessage: [
+    '将重新生成一组完整演示数据，替换上一次生成的测试批次，不会影响真实数据。是否继续？',
+    'A complete demo dataset will be regenerated, replacing the previous generated test batch. Real data will not be affected. Continue?',
+    '전체 데모 데이터 세트를 다시 생성하여 이전 테스트 배치를 교체합니다. 실제 데이터에는 영향을 주지 않습니다. 계속하시겠습니까?',
+    '將重新產生一組完整展示資料，取代上一次產生的測試批次，不會影響真實資料。是否繼續？',
+    '完整なデモデータを再生成し、前回生成したテストバッチを置き換えます。実データには影響しません。続行しますか？'
+  ],
+  demoDataConfirmAction: ['确认生成', 'Generate', '생성', '確認產生', '生成する'],
+  demoDataGenerating: [
+    '正在生成全量演示数据…',
+    'Generating the complete demo dataset…',
+    '전체 데모 데이터를 생성하는 중…',
+    '正在產生完整展示資料…',
+    'デモデータを一式生成中…'
+  ],
+  demoDataGeneratedTitle: [
+    '测试数据生成完成',
+    'Demo data generated',
+    '테스트 데이터 생성 완료',
+    '測試資料產生完成',
+    'テストデータの生成完了'
+  ],
+  demoDataSummaryIntro: [
+    '演示数据已生成，确认后将刷新当前页面。',
+    'The demo data is ready. The current page will refresh after confirmation.',
+    '데모 데이터가 준비되었습니다. 확인하면 현재 페이지가 새로고침됩니다.',
+    '展示資料已產生，確認後將重新整理目前頁面。',
+    'デモデータの準備ができました。確認後、現在のページを更新します。'
+  ],
+  demoDataGenerateFailed: [
+    '测试数据生成失败，请稍后重试',
+    'Failed to generate demo data. Please try again later.',
+    '테스트 데이터를 생성하지 못했습니다. 잠시 후 다시 시도하세요.',
+    '測試資料產生失敗，請稍後再試',
+    'テストデータの生成に失敗しました。後でもう一度お試しください。'
+  ],
+  demoDataSessions: ['游客会话', 'Visitor sessions', '방문객 세션', '遊客會話', '来場者セッション'],
+  demoDataMessages: ['会话消息', 'Messages', '대화 메시지', '會話訊息', '会話メッセージ'],
+  demoDataFeedback: [
+    '评论反馈',
+    'Feedback',
+    '댓글 및 피드백',
+    '評論回饋',
+    'コメント・フィードバック'
+  ],
+  demoDataBehavior: ['游客行为', 'Visitor behavior', '방문객 행동', '遊客行為', '来場者行動'],
+  demoDataRoutes: ['路线选择', 'Route selections', '동선 선택', '路線選擇', 'ルート選択'],
+  demoDataAnnotations: [
+    '消息标注',
+    'Message annotations',
+    '메시지 주석',
+    '訊息標註',
+    'メッセージ注釈'
+  ],
+  demoDataTotal: ['总数据量', 'Total records', '총 레코드', '總資料量', '総レコード数'],
+  demoDataBatch: ['批次', 'Batch', '배치', '批次', 'バッチ'],
+  demoDataGeneratedAt: ['生成时间', 'Generated at', '생성 시간', '產生時間', '生成日時'],
   fileName: ['文件名', 'File name', '파일명', '檔案名稱', 'ファイル名'],
   type: ['类型', 'Type', '유형', '類型', '種類'],
   size: ['大小', 'Size', '크기', '大小', 'サイズ'],

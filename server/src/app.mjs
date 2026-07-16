@@ -37,6 +37,7 @@ import {
 import { schema } from "./db/schema.mjs";
 import { getDb } from "./db/database.mjs";
 import { listAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser } from "./services/userAdmin.mjs";
+import { generateDemoData } from "./services/demoData.mjs";
 
 // The API server persists to a SQLite file. Test / eval scripts import the
 // services directly (not this module) and leave SQLITE_PATH unset, so they run
@@ -437,8 +438,9 @@ async function route(req, res, url) {
 
   if (url.pathname === "/api/admin/conversations" && req.method === "GET") {
     if (!requireAdmin(req, res)) return;
+    const lowSatisfaction = url.searchParams.get("lowSatisfactionOnly") || url.searchParams.get("lowSatisfaction") || "";
     ok(res, listConversationSummaries({
-      lowSatisfactionOnly: url.searchParams.get("lowSatisfaction") === "1"
+      lowSatisfactionOnly: lowSatisfaction === "1" || lowSatisfaction === "true"
     }));
     return;
   }
@@ -492,8 +494,14 @@ async function route(req, res, url) {
     ok(res, getDashboardAnalytics({
       gender: url.searchParams.get("gender") || "",
       ageBand: url.searchParams.get("ageBand") || "",
-      satisfactionMin: url.searchParams.get("satisfactionMin") || ""
+      satisfactionMin: url.searchParams.get("minSatisfaction") || url.searchParams.get("satisfactionMin") || ""
     }));
+    return;
+  }
+
+  if (url.pathname === "/api/admin/demo-data/generate" && req.method === "POST") {
+    if (!requireAdmin(req, res)) return;
+    created(res, generateDemoData());
     return;
   }
 

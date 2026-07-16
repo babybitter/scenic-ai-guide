@@ -538,13 +538,15 @@ const fastEnterConfig: FastEnterConfig = {
       link: WEB_LINKS.COMMUNITY
     },
     {
-      name: '哔哩哔哩',
-      description: '技术分享与交流',
-      icon: 'ri:bilibili-line',
-      iconColor: '#FB7299',
+      name: '测试数据',
+      nameI18nKey: 'app.demoDataName',
+      description: '随机生成全量演示数据',
+      descriptionI18nKey: 'app.demoDataDescription',
+      icon: 'ri:database-2-line',
+      iconColor: '#a855f7',
       enabled: true,
       order: 4,
-      link: WEB_LINKS.BILIBILI
+      action: 'generateDemoData'
     }
   ],
   // 快速链接

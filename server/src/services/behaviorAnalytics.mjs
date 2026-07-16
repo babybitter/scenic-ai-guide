@@ -11,6 +11,13 @@ import { getDb } from "../db/database.mjs";
 const EXCEL_FILE = "景点景区旅游数据行为分析数据.xlsx";
 let cache = null;
 
+// Demo-data batches write directly to SQLite inside a single transaction.
+// Clear the module cache afterwards so an already-open dashboard sees those
+// rows immediately instead of continuing to render its previous snapshot.
+export function invalidateBehaviorDatasetCache() {
+  cache = null;
+}
+
 // B8-01..03: the behaviour dataset is served from the tourist_behavior table.
 // On first use (or after a forced reload) the official Excel is parsed, filtered
 // to Lingshan-related records, and persisted so later reads stay fast.

@@ -215,6 +215,11 @@
         "summary": "Return operation dashboard metrics, rankings, persona and suggestions"
       }
     },
+    "/api/admin/demo-data/generate": {
+      "post": {
+        "summary": "Replace the previous demo batch with randomized full-coverage dashboard and service-quality data"
+      }
+    },
     "/api/admin/conversations": {
       "get": {
         "summary": "List conversation summaries with optional low-satisfaction filter"

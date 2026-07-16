@@ -27,18 +27,33 @@
             v-for="application in enabledApplications"
             :key="application.name"
             class="mr-3 c-p flex-c gap-3 rounded-lg p-2 hover:bg-g-200/70 dark:hover:bg-g-200/90 hover:[&_.app-icon]:!bg-transparent"
+            :class="{
+              'pointer-events-none opacity-60':
+                generatingDemoData && application.action === 'generateDemoData'
+            }"
             @click="handleApplicationClick(application)"
           >
             <div class="app-icon size-12 flex-cc rounded-lg bg-g-200/80 dark:bg-g-300/30">
               <ArtSvgIcon
                 class="text-xl"
-                :icon="application.icon"
+                :class="{
+                  'animate-spin': generatingDemoData && application.action === 'generateDemoData'
+                }"
+                :icon="
+                  generatingDemoData && application.action === 'generateDemoData'
+                    ? 'ri:loader-4-line'
+                    : application.icon
+                "
                 :style="{ color: application.iconColor }"
               />
             </div>
             <div>
-              <h3 class="m-0 text-sm font-medium text-g-800">{{ application.name }}</h3>
-              <p class="mt-1 text-xs text-g-600">{{ application.description }}</p>
+              <h3 class="m-0 text-sm font-medium text-g-800">
+                {{ getApplicationName(application) }}
+              </h3>
+              <p class="mt-1 text-xs text-g-600">
+                {{ getApplicationDescription(application) }}
+              </p>
             </div>
           </div>
         </div>
@@ -62,6 +77,11 @@
 </template>
 
 <script setup lang="ts">
+  import { h } from 'vue'
+  import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
+  import { useI18n } from 'vue-i18n'
+  import { generateDemoData, type DemoDataGenerationResult } from '@/api/admin'
+  import { useCommon } from '@/hooks/core/useCommon'
   import { useFastEnter } from '@/hooks/core/useFastEnter'
   import type { FastEnterApplication, FastEnterQuickLink } from '@/types/config'
 
@@ -69,9 +89,128 @@
 
   const router = useRouter()
   const popoverRef = ref()
+  const { t, locale } = useI18n()
+  const { refresh } = useCommon()
+  const generatingDemoData = ref(false)
 
   // 使用快速入口配置
   const { enabledApplications, enabledQuickLinks } = useFastEnter()
+
+  const getApplicationName = (application: FastEnterApplication): string => {
+    return application.nameI18nKey ? t(application.nameI18nKey) : application.name
+  }
+
+  const getApplicationDescription = (application: FastEnterApplication): string => {
+    return application.descriptionI18nKey
+      ? t(application.descriptionI18nKey)
+      : application.description
+  }
+
+  const formatGeneratedAt = (generatedAt?: string): string => {
+    if (!generatedAt) return ''
+
+    const date = new Date(generatedAt)
+    if (Number.isNaN(date.getTime())) return generatedAt
+
+    return new Intl.DateTimeFormat(locale.value, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(date)
+  }
+
+  const buildDemoDataSummary = (result: DemoDataGenerationResult) => {
+    const counts = result.counts || {}
+    const rows = [
+      [t('app.demoDataSessions'), counts.visitorSessions],
+      [t('app.demoDataMessages'), counts.messages],
+      [t('app.demoDataFeedback'), counts.feedback],
+      [t('app.demoDataBehavior'), counts.touristBehavior],
+      [t('app.demoDataRoutes'), counts.routeSelections],
+      [t('app.demoDataAnnotations'), counts.messageAnnotations],
+      [t('app.demoDataTotal'), counts.total]
+    ].filter(([, value]) => typeof value === 'number')
+
+    const metadata = [
+      result.batchId ? `${t('app.demoDataBatch')}: ${result.batchId}` : '',
+      result.generatedAt
+        ? `${t('app.demoDataGeneratedAt')}: ${formatGeneratedAt(result.generatedAt)}`
+        : ''
+    ].filter(Boolean)
+
+    return h('div', { style: { lineHeight: '1.8' } }, [
+      h('p', { style: { margin: '0 0 10px' } }, t('app.demoDataSummaryIntro')),
+      ...rows.map(([label, value]) =>
+        h(
+          'div',
+          {
+            key: label,
+            style: {
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '32px'
+            }
+          },
+          [
+            h('span', { style: { color: 'var(--el-text-color-regular)' } }, `${label}`),
+            h('strong', { style: { color: 'var(--el-color-primary)' } }, `${value}`)
+          ]
+        )
+      ),
+      ...metadata.map((line) =>
+        h(
+          'div',
+          {
+            key: line,
+            style: {
+              marginTop: '8px',
+              color: 'var(--el-text-color-secondary)',
+              fontSize: '12px'
+            }
+          },
+          line
+        )
+      )
+    ])
+  }
+
+  const handleGenerateDemoData = async (): Promise<void> => {
+    if (generatingDemoData.value) return
+
+    try {
+      await ElMessageBox.confirm(t('app.demoDataConfirmMessage'), t('app.demoDataConfirmTitle'), {
+        type: 'warning',
+        confirmButtonText: t('app.demoDataConfirmAction'),
+        cancelButtonText: t('app.cancel')
+      })
+    } catch {
+      return
+    }
+
+    generatingDemoData.value = true
+    popoverRef.value?.hide()
+    const loading = ElLoading.service({
+      lock: true,
+      text: t('app.demoDataGenerating')
+    })
+
+    try {
+      const result = await generateDemoData()
+      loading.close()
+      await ElMessageBox.alert(buildDemoDataSummary(result), t('app.demoDataGeneratedTitle'), {
+        type: 'success',
+        confirmButtonText: t('common.confirm'),
+        showClose: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      })
+      refresh()
+    } catch {
+      ElMessage.error(t('app.demoDataGenerateFailed'))
+    } finally {
+      loading.close()
+      generatingDemoData.value = false
+    }
+  }
 
   /**
    * 处理导航跳转
@@ -99,7 +238,12 @@
    * 处理应用项点击
    * @param application 应用配置对象
    */
-  const handleApplicationClick = (application: FastEnterApplication): void => {
+  const handleApplicationClick = async (application: FastEnterApplication): Promise<void> => {
+    if (application.action === 'generateDemoData') {
+      await handleGenerateDemoData()
+      return
+    }
+
     handleNavigate(application.routeName, application.link)
   }
 

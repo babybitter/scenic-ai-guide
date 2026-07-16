@@ -37,7 +37,11 @@ export function getUploads() {
   return request.get<UploadRecord[]>({ url: '/api/uploads' })
 }
 
-export function uploadDocument(data: { fileName: string; mimeType: string; contentBase64: string }) {
+export function uploadDocument(data: {
+  fileName: string
+  mimeType: string
+  contentBase64: string
+}) {
   return request.post<UploadRecord>({ url: '/api/uploads', data })
 }
 
@@ -124,6 +128,30 @@ export function importAnalytics() {
   return request.post({ url: '/api/admin/analytics/import' })
 }
 
+// ---- 演示数据 ----
+export interface DemoDataCounts {
+  visitorSessions: number
+  messages: number
+  feedback: number
+  touristBehavior: number
+  routeSelections: number
+  messageAnnotations: number
+  total: number
+}
+
+export interface DemoDataGenerationResult {
+  batchId?: string
+  generatedAt?: string
+  counts?: Partial<DemoDataCounts>
+}
+
+export function generateDemoData() {
+  return request.post<DemoDataGenerationResult>({
+    url: '/api/admin/demo-data/generate',
+    showErrorMessage: false
+  })
+}
+
 // ---- 会话与反馈 ----
 export interface ConversationSummary {
   sessionId: string
@@ -142,7 +170,12 @@ export function getConversations(params: { lowSatisfactionOnly?: boolean } = {})
 }
 
 export function getConversationDetail(sessionId: string) {
-  return request.get<{ sessionId: string; messages: any[]; feedback: any[]; summary: ConversationSummary }>({
+  return request.get<{
+    sessionId: string
+    messages: any[]
+    feedback: any[]
+    summary: ConversationSummary
+  }>({
     url: `/api/admin/conversations/${sessionId}`
   })
 }

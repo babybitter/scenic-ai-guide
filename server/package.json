@@ -22,6 +22,7 @@
     "test:digital-human": "node scripts/test-digital-human.mjs",
     "test:analytics": "node scripts/test-analytics.mjs",
     "test:service-quality": "node scripts/test-service-quality.mjs",
+    "test:demo-data": "node scripts/test-demo-data.mjs",
     "test:concurrency": "node scripts/test-concurrency.mjs",
     "test:demo-mode": "node scripts/test-demo-mode.mjs",
     "test:xfyun-tts": "node scripts/test-xfyun-tts.mjs"
