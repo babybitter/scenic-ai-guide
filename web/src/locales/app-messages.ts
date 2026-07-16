@@ -1292,7 +1292,13 @@ const catalog = {
   dhCurrent: ['当前启用', 'Active', '현재 활성', '目前啟用', '現在有効'],
   dhSetActive: ['设为启用', 'Set active', '활성화', '設為啟用', '有効にする'],
   dhPreview: ['试听', 'Preview', '미리 듣기', '試聽', '試聴'],
-  dhNamePlaceholder: ['如：灵灵', 'e.g. Lingling', '예: 링링', '例如：靈靈', '例：リンリン'],
+  dhNamePlaceholder: [
+    '如：云觉·大佛文化使（女）',
+    'e.g. Yunjue · Grand Buddha Storyteller (Female)',
+    '예: 윈줴 · 대불 문화 해설사 (여)',
+    '例如：雲覺·大佛文化使（女）',
+    '例：雲覚・大仏文化ナビゲーター（女性）'
+  ],
   dhLive2dHint: [
     '本地 Live2D 画布渲染，声音由后端 TTS 合成，无需云端形象凭证；与讯飞互为冗余。',
     'Local Live2D canvas with backend TTS; no cloud avatar credentials are required. It provides redundancy for iFlytek.',
@@ -1480,60 +1486,60 @@ const catalog = {
   ],
   dhVoiceGuideMale: ['导览男声', 'Guide male', '가이드 남성 음성', '導覽男聲', 'ガイド男性音声'],
   dhAvatarReceptionMale: [
-    '景行·灵山迎宾使',
-    'Jingxing · Lingshan Host',
-    '징싱 · 링산 환영 안내자',
-    '景行·靈山迎賓使',
-    '景行・霊山おもてなし案内人'
+    '景行·灵山迎宾使（男）',
+    'Jingxing · Lingshan Host (Male)',
+    '징싱 · 링산 환영 안내자 (남)',
+    '景行·靈山迎賓使（男）',
+    '景行・霊山おもてなし案内人（男性）'
   ],
   dhAvatarReceptionFemale: [
-    '灵悦·莲心礼宾使',
-    'Lingyue · Lotus Host',
-    '링웨 · 연꽃 의전 안내자',
-    '靈悅·蓮心禮賓使',
-    '霊悦・蓮心コンシェルジュ'
+    '灵悦·莲心礼宾使（女）',
+    'Lingyue · Lotus Host (Female)',
+    '링웨 · 연꽃 의전 안내자 (여)',
+    '靈悅·蓮心禮賓使（女）',
+    '霊悦・蓮心コンシェルジュ（女性）'
   ],
   dhAvatarScenicA: [
-    '云觉·大佛文化使',
-    'Yunjue · Grand Buddha Storyteller',
-    '윈줴 · 대불 문화 해설사',
-    '雲覺·大佛文化使',
-    '雲覚・大仏文化ナビゲーター'
+    '云觉·大佛文化使（女）',
+    'Yunjue · Grand Buddha Storyteller (Female)',
+    '윈줴 · 대불 문화 해설사 (여)',
+    '雲覺·大佛文化使（女）',
+    '雲覚・大仏文化ナビゲーター（女性）'
   ],
   dhAvatarScenicB: [
-    '梵音·梵宫导览使',
-    'Fanyin · Brahma Palace Guide',
-    '판인 · 범궁 안내자',
-    '梵音·梵宮導覽使',
-    '梵音・梵宮ガイド'
+    '梵音·梵宫导览使（女）',
+    'Fanyin · Brahma Palace Guide (Female)',
+    '판인 · 범궁 안내자 (여)',
+    '梵音·梵宮導覽使（女）',
+    '梵音・梵宮ガイド（女性）'
   ],
   dhModelHaru: [
-    '春和·九龙灵使',
-    'Chunhe · Nine Dragons Guide',
-    '춘허 · 구룡 관욕 안내자',
-    '春和·九龍靈使',
-    '春和・九龍灌浴ガイド'
+    '春和·九龙灵使（女）',
+    'Chunhe · Nine Dragons Guide (Female)',
+    '춘허 · 구룡 관욕 안내자 (여)',
+    '春和·九龍靈使（女）',
+    '春和・九龍灌浴ガイド（女性）'
   ],
   dhModelHiyori: [
-    '晴音·莲华旅伴',
-    'Qingyin · Lotus Journey Companion',
-    '칭인 · 연화 여행 동반자',
-    '晴音·蓮華旅伴',
-    '晴音・蓮華の旅パートナー'
+    '晴音·莲华旅伴（女）',
+    'Qingyin · Lotus Journey Companion (Female)',
+    '칭인 · 연화 여행 동반자 (여)',
+    '晴音·蓮華旅伴（女）',
+    '晴音・蓮華の旅パートナー（女性）'
   ],
   dhModelKei: [
-    '知远·坛城研学使',
-    'Zhiyuan · Mandala Learning Guide',
-    '즈위안 · 만다라 학습 안내자',
-    '知遠·壇城研學使',
-    '知遠・曼荼羅学習ガイド'
+    '知远·坛城研学使（男）',
+    'Zhiyuan · Mandala Learning Guide (Male)',
+    '즈위안 · 만다라 학습 안내자 (남)',
+    '知遠·壇城研學使（男）',
+    '知遠・曼荼羅学習ガイド（男性）'
   ],
   dhModelHibiki: [
-    '清响·禅旅伙伴',
-    'Qingxiang · Zen Journey Companion',
-    '칭샹 · 선 여행 동반자',
-    '清響·禪旅夥伴',
-    '清響・禅の旅パートナー'
+    '清响·禅旅伙伴（男）',
+    'Qingxiang · Zen Journey Companion (Male)',
+    '칭샹 · 선 여행 동반자 (남)',
+    '清響·禪旅夥伴（男）',
+    '清響・禅の旅パートナー（男性）'
   ],
 
   avatarConnecting: ['连接中', 'Connecting', '연결 중', '連線中', '接続中'],
@@ -1543,11 +1549,11 @@ const catalog = {
   avatarTextMode: ['文本模式', 'Text mode', '텍스트 모드', '文字模式', 'テキストモード'],
   avatarIdle: ['待机', 'Idle', '대기', '待機', '待機'],
   avatarGuideName: [
-    '灵山 AI 导游',
-    'Lingshan AI Guide',
-    '링산 AI 가이드',
-    '靈山 AI 導遊',
-    '霊山 AI ガイド'
+    '云觉·大佛文化使（女）',
+    'Yunjue · Grand Buddha Storyteller (Female)',
+    '윈줴 · 대불 문화 해설사 (여)',
+    '雲覺·大佛文化使（女）',
+    '雲覚・大仏文化ナビゲーター（女性）'
   ],
   avatarEnableAudio: [
     '点击开启数字人声音',

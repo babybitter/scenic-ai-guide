@@ -286,6 +286,7 @@
     form.engine = option.engine
     form.avatarId = option.avatarId
     form.modelId = option.modelId || form.modelId
+    form.name = t(option.labelKey)
   }
 
   function selectVoice(option: VoiceOption) {

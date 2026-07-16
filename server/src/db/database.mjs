@@ -14,6 +14,17 @@ import { hashPassword } from "./password.mjs";
 
 let db = null;
 
+const DIGITAL_HUMAN_NAMES = {
+  receptionMale: "景行·灵山迎宾使（男）",
+  receptionFemale: "灵悦·莲心礼宾使（女）",
+  scenicFemaleA: "云觉·大佛文化使（女）",
+  scenicFemaleB: "梵音·梵宫导览使（女）",
+  live2dHaru: "春和·九龙灵使（女）",
+  live2dHiyori: "晴音·莲华旅伴（女）",
+  live2dKei: "知远·坛城研学使（男）",
+  live2dHibiki: "清响·禅旅伙伴（男）"
+};
+
 const DDL = `
 CREATE TABLE IF NOT EXISTS admin_users (
   id TEXT PRIMARY KEY,
@@ -220,6 +231,7 @@ export function seedReferenceData(instance = getDb()) {
   seedAdminUser(instance);
   seedDigitalHuman(instance);
   seedDigitalHumanCatalog(instance);
+  migrateLegacyDigitalHumanNames(instance);
   seedScenicSpots(instance);
   return instance;
 }
@@ -261,7 +273,7 @@ function seedDigitalHuman(instance) {
     )
     .run({
       id: "dh_default_lingshan",
-      name: "灵灵",
+      name: DIGITAL_HUMAN_NAMES.receptionMale,
       engine: "xfyun",
       avatar_id: process.env.DEFAULT_AVATAR_ID || "cnr5dg8n2000000003",
       vcn: process.env.DEFAULT_AVATAR_VCN || "x5_lingxiaoyue_flow",
@@ -324,17 +336,17 @@ function seedDigitalHumanCatalog(instance) {
 
   const catalog = [
     // iFlytek cloud avatars (name, vcn, avatar_id) supplied for this deployment.
-    { ...baseXfyun, id: "dh_xf_zhanting_male", name: "展厅接待男声", vcn: "x6_zhantingnanjiedai_pro", avatar_id: "cnr5dg8n2000000003", voice_id: "x6_zhantingnanjiedai_pro" },
-    { ...baseXfyun, id: "dh_xf_zhanting_female", name: "展厅接待女声", vcn: "x6_zhantingnvjiedai_pro", avatar_id: "cnrfb86h2000000004", voice_id: "x6_zhantingnvjiedai_pro" },
-    { ...baseXfyun, id: "dh_xf_shangwu_yinyu", name: "商务殷语", vcn: "x6_xiangruiyingyu_pro", avatar_id: "cnr5dg8n2000000003", voice_id: "x6_xiangruiyingyu_pro" },
+    { ...baseXfyun, id: "dh_xf_zhanting_male", name: DIGITAL_HUMAN_NAMES.receptionMale, vcn: "x6_zhantingnanjiedai_pro", avatar_id: "cnr5dg8n2000000003", voice_id: "x6_zhantingnanjiedai_pro" },
+    { ...baseXfyun, id: "dh_xf_zhanting_female", name: DIGITAL_HUMAN_NAMES.receptionFemale, vcn: "x6_zhantingnvjiedai_pro", avatar_id: "cnrfb86h2000000004", voice_id: "x6_zhantingnvjiedai_pro" },
+    { ...baseXfyun, id: "dh_xf_shangwu_yinyu", name: DIGITAL_HUMAN_NAMES.receptionMale, vcn: "x6_xiangruiyingyu_pro", avatar_id: "cnr5dg8n2000000003", voice_id: "x6_xiangruiyingyu_pro" },
     // Same voice, two different avatar images -> kept as two rows, names disambiguated.
-    { ...baseXfyun, id: "dh_xf_daolan_female_a", name: "景区导览女声（形象一）", vcn: "x6_jingqudaolannvsheng_mini", avatar_id: "cnrmkf0e2000000006", voice_id: "x6_jingqudaolannvsheng_mini" },
-    { ...baseXfyun, id: "dh_xf_daolan_female_b", name: "景区导览女声（形象二）", vcn: "x6_jingqudaolannvsheng_mini", avatar_id: "cnrn9jgi2000000005", voice_id: "x6_jingqudaolannvsheng_mini" },
+    { ...baseXfyun, id: "dh_xf_daolan_female_a", name: DIGITAL_HUMAN_NAMES.scenicFemaleA, vcn: "x6_jingqudaolannvsheng_mini", avatar_id: "cnrmkf0e2000000006", voice_id: "x6_jingqudaolannvsheng_mini" },
+    { ...baseXfyun, id: "dh_xf_daolan_female_b", name: DIGITAL_HUMAN_NAMES.scenicFemaleB, vcn: "x6_jingqudaolannvsheng_mini", avatar_id: "cnrn9jgi2000000005", voice_id: "x6_jingqudaolannvsheng_mini" },
     // Local Live2D fallback avatars (name, model_id = character folder, vcn = TTS voice for lip-sync audio).
-    { ...baseLive2d, id: "dh_l2d_haru", name: "Live2D · 春（女声）", model_id: "Haru", vcn: "x5_lingxiaoyue_flow", voice_id: "guide_female" },
-    { ...baseLive2d, id: "dh_l2d_hiyori", name: "Live2D · 日和（女声）", model_id: "Hiyori", vcn: "x5_lingxiaoyue_flow", voice_id: "guide_female" },
-    { ...baseLive2d, id: "dh_l2d_kei", name: "Live2D · 圭（男声）", model_id: "Kei", vcn: "x4_pengfei", voice_id: "guide_male" },
-    { ...baseLive2d, id: "dh_l2d_hibiki", name: "Live2D · 响（男声）", model_id: "Hibiki", vcn: "x4_pengfei", voice_id: "guide_male" }
+    { ...baseLive2d, id: "dh_l2d_haru", name: DIGITAL_HUMAN_NAMES.live2dHaru, model_id: "Haru", vcn: "x5_lingxiaoyue_flow", voice_id: "guide_female" },
+    { ...baseLive2d, id: "dh_l2d_hiyori", name: DIGITAL_HUMAN_NAMES.live2dHiyori, model_id: "Hiyori", vcn: "x5_lingxiaoyue_flow", voice_id: "guide_female" },
+    { ...baseLive2d, id: "dh_l2d_kei", name: DIGITAL_HUMAN_NAMES.live2dKei, model_id: "Kei", vcn: "x4_pengfei", voice_id: "guide_male" },
+    { ...baseLive2d, id: "dh_l2d_hibiki", name: DIGITAL_HUMAN_NAMES.live2dHibiki, model_id: "Hibiki", vcn: "x4_pengfei", voice_id: "guide_male" }
   ];
 
   const insert = instance.prepare(
@@ -351,6 +363,46 @@ function seedDigitalHumanCatalog(instance) {
     }
   });
   tx(catalog);
+}
+
+// Rename only names shipped by earlier versions. Administrator-defined names
+// are deliberately left untouched.
+function migrateLegacyDigitalHumanNames(instance) {
+  const legacyNames = [
+    ["灵灵", DIGITAL_HUMAN_NAMES.receptionMale],
+    ["展厅接待男", DIGITAL_HUMAN_NAMES.receptionMale],
+    ["展厅接待男声", DIGITAL_HUMAN_NAMES.receptionMale],
+    ["景行·灵山迎宾使", DIGITAL_HUMAN_NAMES.receptionMale],
+    ["商务殷语", DIGITAL_HUMAN_NAMES.receptionMale],
+    ["展厅接待女", DIGITAL_HUMAN_NAMES.receptionFemale],
+    ["展厅接待女声", DIGITAL_HUMAN_NAMES.receptionFemale],
+    ["灵悦·莲心礼宾使", DIGITAL_HUMAN_NAMES.receptionFemale],
+    ["景区导览形象一", DIGITAL_HUMAN_NAMES.scenicFemaleA],
+    ["景区导览女声（形象一）", DIGITAL_HUMAN_NAMES.scenicFemaleA],
+    ["云觉·大佛文化使", DIGITAL_HUMAN_NAMES.scenicFemaleA],
+    ["景区导览形象二", DIGITAL_HUMAN_NAMES.scenicFemaleB],
+    ["景区导览女声（形象二）", DIGITAL_HUMAN_NAMES.scenicFemaleB],
+    ["梵音·梵宫导览使", DIGITAL_HUMAN_NAMES.scenicFemaleB],
+    ["春 Haru（女）", DIGITAL_HUMAN_NAMES.live2dHaru],
+    ["Live2D · 春（女声）", DIGITAL_HUMAN_NAMES.live2dHaru],
+    ["春和·九龙灵使", DIGITAL_HUMAN_NAMES.live2dHaru],
+    ["日和 Hiyori（女）", DIGITAL_HUMAN_NAMES.live2dHiyori],
+    ["Live2D · 日和（女声）", DIGITAL_HUMAN_NAMES.live2dHiyori],
+    ["晴音·莲华旅伴", DIGITAL_HUMAN_NAMES.live2dHiyori],
+    ["圭 Kei（男）", DIGITAL_HUMAN_NAMES.live2dKei],
+    ["Live2D · 圭（男声）", DIGITAL_HUMAN_NAMES.live2dKei],
+    ["知远·坛城研学使", DIGITAL_HUMAN_NAMES.live2dKei],
+    ["响 Hibiki（男）", DIGITAL_HUMAN_NAMES.live2dHibiki],
+    ["Live2D · 响（男声）", DIGITAL_HUMAN_NAMES.live2dHibiki],
+    ["清响·禅旅伙伴", DIGITAL_HUMAN_NAMES.live2dHibiki]
+  ];
+  const update = instance.prepare("UPDATE digital_human_configs SET name = ? WHERE name = ?");
+  const tx = instance.transaction((rows) => {
+    for (const [previousName, nextName] of rows) {
+      update.run(nextName, previousName);
+    }
+  });
+  tx(legacyNames);
 }
 
 function seedScenicSpots(instance) {
