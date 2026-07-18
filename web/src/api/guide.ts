@@ -153,6 +153,13 @@ export function fetchHistory(sessionId: string) {
   return request.get<ChatMessage[]>({ url: '/api/chat/history', params: { sessionId } })
 }
 
+export function clearChatHistory(sessionId: string) {
+  return request.del<{ sessionId: string; deleted: number }>({
+    url: '/api/chat/history',
+    params: { sessionId }
+  })
+}
+
 export interface VoiceAskResult {
   transcript: string
   asr?: unknown

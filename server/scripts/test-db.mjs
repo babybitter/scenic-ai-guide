@@ -1,7 +1,7 @@
 // Round-trip test for the SQLite persistence layer (in-memory database).
 import assert from "node:assert/strict";
 import { getDb } from "../src/db/database.mjs";
-import { appendMessage, getHistory, getMessages, listAllMessages } from "../src/services/conversation.mjs";
+import { appendMessage, clearMessages, getHistory, getMessages, listAllMessages } from "../src/services/conversation.mjs";
 import { createFeedback, listFeedback } from "../src/services/feedback.mjs";
 import { createAdminFaq, findAdminFaqAnswer, listAdminFaqs, updateAdminFaq } from "../src/services/adminFaq.mjs";
 import {
@@ -50,6 +50,16 @@ check("messages round-trip and history order", () => {
   assert.equal(history[0].role, "user");
   assert.equal(getMessages(sid).length, 2);
   assert.ok(listAllMessages().length >= 2);
+});
+
+check("messages can be cleared per session", () => {
+  const sid = `clear_${Date.now()}`;
+  appendMessage(sid, { role: "user", content: "推荐一条路线" });
+  appendMessage(sid, { role: "assistant", content: "从南门开始游览。" });
+  const result = clearMessages(sid);
+  assert.equal(result.deleted, 2);
+  assert.equal(getMessages(sid).length, 0);
+  assert.equal(getDb().prepare("SELECT message_count FROM visitor_sessions WHERE id = ?").get(sid).message_count, 0);
 });
 
 check("feedback round-trip", () => {

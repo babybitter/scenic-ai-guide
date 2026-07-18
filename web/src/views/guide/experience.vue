@@ -185,6 +185,18 @@
           </div>
         </ElTabPane>
       </ElTabs>
+      <ElButton
+        class="clear-chat-button"
+        type="danger"
+        text
+        :icon="Delete"
+        :loading="clearingHistory"
+        :disabled="asking || clearingHistory || !messages.length"
+        :aria-label="$t('app.guideClearChat')"
+        @click="handleClearChatHistory"
+      >
+        {{ $t('app.guideClearChat') }}
+      </ElButton>
     </section>
   </div>
 </template>
@@ -192,11 +204,12 @@
 <script setup lang="ts">
   import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import { Microphone } from '@element-plus/icons-vue'
-  import { ElMessage } from 'element-plus'
+  import { Delete, Microphone } from '@element-plus/icons-vue'
+  import { ElMessage, ElMessageBox } from 'element-plus'
   import DigitalHumanAvatar from '@/components/digital-human/DigitalHumanAvatar.vue'
   import {
     askQuestion,
+    clearChatHistory,
     createVisitorSession,
     fetchHistory,
     fetchScenicSpots,
@@ -231,6 +244,7 @@
   const messages = ref<UiMessage[]>([])
   const input = ref('')
   const asking = ref(false)
+  const clearingHistory = ref(false)
   const statusTip = ref(t('app.guideConnecting'))
   const lastLabel = ref('')
   // 当前渲染引擎：讯飞（xfyun）云端流按 1080:960 输出，需让展区同比以消除上下墨绿边；
@@ -286,6 +300,37 @@
       } catch {
         /* ignore */
       }
+    }
+  }
+
+  async function handleClearChatHistory() {
+    if (!messages.value.length || asking.value || clearingHistory.value) return
+
+    try {
+      await ElMessageBox.confirm(t('app.guideClearChatConfirm'), t('app.guideClearChat'), {
+        type: 'warning',
+        confirmButtonText: t('app.guideClearChat'),
+        cancelButtonText: t('app.cancel')
+      })
+    } catch {
+      return
+    }
+
+    clearingHistory.value = true
+    try {
+      await clearChatHistory(sessionId.value)
+      await avatarRef.value?.interrupt()
+      messages.value = []
+      input.value = ''
+      lastLabel.value = ''
+      lastMessageId.value = ''
+      rating.value = 0
+      statusTip.value = t('app.guideReady')
+      ElMessage.success(t('app.guideClearChatDone'))
+    } catch {
+      ElMessage.error(t('app.guideClearChatFailed'))
+    } finally {
+      clearingHistory.value = false
     }
   }
 
@@ -568,6 +613,7 @@
   }
 
   .panel-column {
+    position: relative;
     display: flex;
     flex: 1;
     min-width: 0;
@@ -579,6 +625,10 @@
     flex-direction: column;
     height: 100%;
 
+    :deep(.el-tabs__nav-wrap) {
+      margin-right: 148px;
+    }
+
     :deep(.el-tabs__content) {
       flex: 1;
       min-height: 0;
@@ -587,6 +637,14 @@
     :deep(.el-tab-pane) {
       height: 100%;
     }
+  }
+
+  .clear-chat-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    height: 40px;
   }
 
   .chat-wrap {

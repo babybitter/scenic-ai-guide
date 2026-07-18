@@ -107,6 +107,9 @@
     "/api/chat/history": {
       "get": {
         "summary": "Return recorded messages for a visitor session"
+      },
+      "delete": {
+        "summary": "Clear recorded messages for a visitor session"
       }
     },
     "/api/chat/faq-cache": {

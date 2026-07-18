@@ -97,6 +97,28 @@ export function getMessages(sessionId) {
     .map(toMessage);
 }
 
+export function clearMessages(sessionId) {
+  const id = String(sessionId || "").trim();
+  if (!id) {
+    return { sessionId: "", deleted: 0 };
+  }
+
+  const db = getDb();
+  return db.transaction(() => {
+    db.prepare(
+      `DELETE FROM message_annotations
+       WHERE message_id IN (SELECT id FROM messages WHERE session_id = ?)`
+    ).run(id);
+    db.prepare(
+      `DELETE FROM feedback
+       WHERE message_id IN (SELECT id FROM messages WHERE session_id = ?)`
+    ).run(id);
+    const result = db.prepare("DELETE FROM messages WHERE session_id = ?").run(id);
+    db.prepare("UPDATE visitor_sessions SET message_count = 0 WHERE id = ?").run(id);
+    return { sessionId: id, deleted: result.changes };
+  })();
+}
+
 export function listAllMessages() {
   return getDb()
     .prepare("SELECT * FROM messages ORDER BY created_at ASC, rowid ASC")

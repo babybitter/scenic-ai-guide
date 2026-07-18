@@ -21,7 +21,7 @@ import {
   updateDigitalHumanConfig
 } from "./services/digitalHuman.mjs";
 import { faqCacheStats } from "./services/faqCache.mjs";
-import { getMessages } from "./services/conversation.mjs";
+import { clearMessages, getMessages } from "./services/conversation.mjs";
 import { createFeedback, listFeedback } from "./services/feedback.mjs";
 import { createAdminFaq, findAdminFaqAnswer, listAdminFaqs, updateAdminFaq } from "./services/adminFaq.mjs";
 import { createScenicSpot, disableScenicSpot, listAllManagedScenicSpots, listManagedScenicSpots, updateScenicSpot } from "./services/scenicAdmin.mjs";
@@ -424,6 +424,16 @@ async function route(req, res, url) {
   if (url.pathname === "/api/chat/history" && req.method === "GET") {
     const sessionId = url.searchParams.get("sessionId") || "";
     ok(res, getMessages(sessionId));
+    return;
+  }
+
+  if (url.pathname === "/api/chat/history" && req.method === "DELETE") {
+    const sessionId = url.searchParams.get("sessionId") || "";
+    if (!sessionId) {
+      fail(res, 400, "SESSION_ID_REQUIRED", "A visitor session id is required.");
+      return;
+    }
+    ok(res, clearMessages(sessionId));
     return;
   }
 

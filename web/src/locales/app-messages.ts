@@ -1048,6 +1048,34 @@ const catalog = {
   guideTabChat: ['智能问答', 'AI Q&A', 'AI 질의응답', '智慧問答', 'AI 質問応答'],
   guideTabSpots: ['景点讲解', 'Attraction Stories', '관광지 해설', '景點講解', 'スポット解説'],
   guideTabRoutes: ['路线推荐', 'Route Planner', '경로 추천', '路線推薦', 'ルート提案'],
+  guideClearChat: [
+    '清空聊天记录',
+    'Clear chat',
+    '대화 기록 지우기',
+    '清空聊天記錄',
+    'チャット履歴を消去'
+  ],
+  guideClearChatConfirm: [
+    '确定清空当前会话的全部聊天记录吗？此操作无法撤销。',
+    'Clear all messages in this conversation? This action cannot be undone.',
+    '현재 대화의 모든 메시지를 지우시겠습니까? 이 작업은 취소할 수 없습니다.',
+    '確定清空目前對話的全部聊天記錄嗎？此操作無法復原。',
+    'この会話のすべてのメッセージを消去しますか？この操作は元に戻せません。'
+  ],
+  guideClearChatDone: [
+    '聊天记录已清空',
+    'Chat history cleared.',
+    '대화 기록을 지웠습니다.',
+    '聊天記錄已清空',
+    'チャット履歴を消去しました。'
+  ],
+  guideClearChatFailed: [
+    '清空聊天记录失败',
+    'Failed to clear chat history.',
+    '대화 기록을 지우지 못했습니다.',
+    '清空聊天記錄失敗',
+    'チャット履歴を消去できませんでした。'
+  ],
   guideEmptyChat: [
     '向 AI 导游提问吧，例如“灵山大佛多高”',
     'Ask the AI guide, for example “How tall is the Lingshan Grand Buddha?”',
