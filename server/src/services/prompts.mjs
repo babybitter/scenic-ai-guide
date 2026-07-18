@@ -2,6 +2,8 @@
 // The persona is warm, professional, concise; answers are grounded strictly in
 // the provided Lingshan materials, with length rules per mode.
 
+import { localeInstruction, normalizeLocale } from "./language.mjs";
+
 const PERSONA = [
   "你是“灵山胜境”景区当前启用的 AI 数字人导游。",
   "你的风格:亲切、专业、简洁,像一位熟悉灵山、懂佛教文化的资深导游,而不是百科朗读机。",
@@ -13,7 +15,7 @@ const GROUNDING_RULES = [
   "如果资料中没有相关信息,要如实说明“当前资料未覆盖”,并给出可以追问的方向,绝不猜测。",
   "游客询问灵山胜境以外的景区或与景区无关的问题时,礼貌说明你只负责灵山胜境,并把话题引导回灵山胜境。",
   "涉及辱骂、政治、医疗、投资、危险行为等敏感或无关内容,礼貌拒答并引导回景区导览服务。",
-  "回答用简体中文,面向现场游客,重点信息优先,不要输出资料里的原始字段名或编号。"
+  "面向现场游客,重点信息优先,不要输出资料里的原始字段名或编号。"
 ].join("");
 
 const MODE_RULES = {
@@ -22,9 +24,18 @@ const MODE_RULES = {
   route: "这是路线推荐模式:请分步骤输出(1. 2. 3. ...),每步说明到访节点与理由,结尾提示可逐点讲解。"
 };
 
-export function buildSystemPrompt({ mode = "qa" } = {}) {
+export function buildSystemPrompt({ mode = "qa", locale = "zh" } = {}) {
   const modeRule = MODE_RULES[mode] || MODE_RULES.qa;
-  return [PERSONA, "", "服务规则:", GROUNDING_RULES, "", "本次回答要求:", modeRule].join("\n");
+  return [
+    PERSONA,
+    "",
+    "服务规则:",
+    GROUNDING_RULES,
+    localeInstruction(normalizeLocale(locale)),
+    "",
+    "本次回答要求:",
+    modeRule
+  ].join("\n");
 }
 
 export function buildNarrationSystemPrompt() {
@@ -64,8 +75,9 @@ export function buildContextBlock(results = []) {
 /**
  * Builds the full message array: system + prior turns + grounded user turn.
  */
-export function buildMessages({ mode, question, results, history = [] }) {
-  const messages = [{ role: "system", content: buildSystemPrompt({ mode }) }];
+export function buildMessages({ mode, question, results, history = [], locale = "zh" }) {
+  const normalizedLocale = normalizeLocale(locale, question);
+  const messages = [{ role: "system", content: buildSystemPrompt({ mode, locale: normalizedLocale }) }];
 
   for (const turn of history.slice(-6)) {
     if (turn.role === "user" || turn.role === "assistant") {
@@ -76,7 +88,7 @@ export function buildMessages({ mode, question, results, history = [] }) {
   const context = buildContextBlock(results);
   messages.push({
     role: "user",
-    content: `${context}\n\n游客问题:${question}\n\n请依据以上资料回答。`
+    content: `${context}\n\n游客问题:${question}\n\n请依据以上资料回答。${localeInstruction(normalizedLocale)}`
   });
 
   return messages;

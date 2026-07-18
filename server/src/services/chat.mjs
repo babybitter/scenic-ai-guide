@@ -11,8 +11,13 @@ import { detectSensitive, detectOutOfScope, detectEmotion } from "./guardrails.m
 import { getCachedAnswer, setCachedAnswer } from "./faqCache.mjs";
 import { appendMessage, getHistory, getLastSpotName } from "./conversation.mjs";
 import { mapAnswerToDigitalHumanState } from "./digitalHuman.mjs";
+import { normalizeLocale } from "./language.mjs";
 
-const FOLLOW_UP_PRONOUNS = ["它", "他", "她", "这里", "那里", "这个", "那个", "这座", "那座"];
+const FOLLOW_UP_PRONOUNS = [
+  "它", "他", "她", "这里", "那里", "这个", "那个", "这座", "那座",
+  "it", "this", "that", "there", "그것", "그곳", "여기", "거기", "그거",
+  "それ", "そこ", "ここ", "この場所", "あそこ", "這裡", "那裡", "這個", "那個"
+];
 
 function nowMs() {
   return Date.now();
@@ -20,7 +25,7 @@ function nowMs() {
 
 function knownSpotNames() {
   const knowledge = loadKnowledge();
-  return (knowledge?.spots || []).map((spot) => spot.name);
+  return (knowledge?.spots || []).flatMap((spot) => spot.aliases || [spot.name]);
 }
 
 // AI2-06 & AI2-09: infer the answer mode from the question wording.
@@ -28,10 +33,10 @@ function inferMode(question, explicitMode) {
   if (explicitMode && ["qa", "explain", "route"].includes(explicitMode)) {
     return explicitMode;
   }
-  if (/(路线|怎么玩|怎么逛|游览顺序|几小时|半日|一日|行程|安排)/.test(question)) {
+  if (/(路线|怎么玩|怎么逛|游览顺序|几小时|半日|一日|行程|安排|route|itinerary|recommend|경로|동선|추천|ルート|コース|提案|路線|行程|推薦)/i.test(question)) {
     return "route";
   }
-  if (/(详细介绍|讲解|讲讲|好好说说|多讲点|完整介绍)/.test(question)) {
+  if (/(详细介绍|讲解|讲讲|好好说说|多讲点|完整介绍|explain|tell me more|in detail|자세히|설명|詳しく|解説|詳細介紹|講解)/i.test(question)) {
     return "explain";
   }
   return "qa";
@@ -89,7 +94,9 @@ function emotionTag({ scenario, label, emotion }) {
 // Generic terms that alone should not qualify a question as "covered" — the
 // scenic-area name appears in almost every chunk, so matching it proves nothing.
 const GENERIC_TERMS = new Set([
-  "灵山胜境", "灵山", "景区", "这里", "那里", "有没有", "请问", "介绍", "推荐"
+  "灵山胜境", "灵山", "景区", "这里", "那里", "有没有", "请问", "介绍", "推荐",
+  "lingshan", "scenic", "area", "please", "tell", "about", "recommend",
+  "링산", "관광지", "알려", "추천", "霊山", "観光地", "教えて", "靈山", "景區", "介紹", "推薦"
 ]);
 
 // True when the question's distinctive terms actually appear in retrieved text,
@@ -107,8 +114,10 @@ function retrievalIsRelevant(retrieval) {
   const haystack = (retrieval.results || [])
     .slice(0, 3)
     .map((item) => `${item.title}${item.content}`)
-    .join("");
-  return salient.some((token) => haystack.includes(token));
+    .join("")
+    .normalize("NFKC")
+    .toLowerCase();
+  return salient.some((token) => haystack.includes(String(token).normalize("NFKC").toLowerCase()));
 }
 
 function classifyScenario({ question, retrieval, emotion }) {
@@ -123,7 +132,7 @@ function classifyScenario({ question, retrieval, emotion }) {
     return { scenario: "out_of_scope", otherPlace: outOfScope.place };
   }
 
-  const isGreeting = /^(你好|您好|hi|hello|在吗|在么|谢谢|感谢|再见|拜拜)/i.test(question.trim())
+  const isGreeting = /^(你好|您好|hi|hello|hey|在吗|在么|谢谢|感谢|再见|拜拜|안녕|감사|こんにちは|こんばんは|ありがとう|您好|謝謝)/i.test(question.trim())
     || question.trim().length <= 3;
 
   if (results.length === 0) {
@@ -156,7 +165,7 @@ function buildMeta({ scenario, mode, question, retrieval, extras }) {
  * Core RAG answer. Returns answer text, citations, labels, retrieval context and
  * a latency breakdown. Works identically for mock and real LLM providers.
  */
-export async function answerQuestion({ question, sessionId = "", mode: explicitMode, history: clientHistory, signal } = {}) {
+export async function answerQuestion({ question, sessionId = "", mode: explicitMode, history: clientHistory, locale, signal } = {}) {
   const started = nowMs();
   const trimmed = String(question || "").trim();
   if (!trimmed) {
@@ -168,9 +177,11 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
 
   const mode = inferMode(trimmed, explicitMode);
   const emotion = detectEmotion(trimmed);
+  const responseLocale = normalizeLocale(locale, trimmed);
+  const cacheQuestion = `${responseLocale}::${trimmed}`;
 
   // AI2-12: fast path for cached high-frequency questions.
-  const cached = getCachedAnswer(trimmed, mode);
+  const cached = getCachedAnswer(cacheQuestion, mode);
   if (cached) {
     if (sessionId) {
       appendMessage(sessionId, { role: "user", content: trimmed, emotionLabel: emotion });
@@ -201,7 +212,7 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
   if (!preSensitive.sensitive && !preScope.outOfScope) {
     const retrievalStart = nowMs();
     try {
-      retrieval = hybridSearch(query, { limit: 5 });
+      retrieval = hybridSearch(query, { limit: 5, locale: responseLocale });
     } catch (error) {
       if (error.code !== "KNOWLEDGE_NOT_BUILT") {
         throw error;
@@ -222,7 +233,7 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
     mode,
     question: trimmed,
     retrieval,
-    extras: { sensitiveCategory, otherPlace, anchoredSpot }
+    extras: { sensitiveCategory, otherPlace, anchoredSpot, locale: responseLocale }
   });
 
   const history = Array.isArray(clientHistory) && clientHistory.length
@@ -233,7 +244,7 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
   // scenarios we still call the provider so behavior is uniform (the mock
   // composes the refusal; the real model follows the system prompt).
   const results = scenario === "grounded" ? retrieval.results : [];
-  const messages = buildMessages({ mode, question: trimmed, results, history });
+  const messages = buildMessages({ mode, question: trimmed, results, history, locale: responseLocale });
 
   const llmStart = nowMs();
   const completion = await llmComplete({ messages, meta, signal });
@@ -248,6 +259,7 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
   const answerPayload = {
     answer: completion.text,
     mode,
+    locale: responseLocale,
     scenario,
     label,
     emotion: emotionLabel,
@@ -270,7 +282,7 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
 
   // AI2-12: cache confident factual/route answers for reuse.
   if ((scenario === "grounded") && completion.text) {
-    setCachedAnswer(trimmed, mode, answerPayload);
+    setCachedAnswer(cacheQuestion, mode, answerPayload);
   }
 
   if (sessionId) {
@@ -300,7 +312,7 @@ export async function answerQuestion({ question, sessionId = "", mode: explicitM
  * Streaming variant (AI2-01 streaming + V4-11 first-sentence latency).
  * Yields text deltas. Guardrail/no-data scenarios stream the composed refusal.
  */
-export async function* answerQuestionStream({ question, sessionId = "", mode: explicitMode, signal } = {}) {
+export async function* answerQuestionStream({ question, sessionId = "", mode: explicitMode, locale, signal } = {}) {
   const trimmed = String(question || "").trim();
   if (!trimmed) {
     const error = new Error("Question is required.");
@@ -310,6 +322,7 @@ export async function* answerQuestionStream({ question, sessionId = "", mode: ex
   }
 
   const mode = inferMode(trimmed, explicitMode);
+  const responseLocale = normalizeLocale(locale, trimmed);
   const { query } = resolveFollowUp(trimmed, sessionId);
   const preSensitive = detectSensitive(trimmed);
   const preScope = detectOutOfScope(trimmed);
@@ -317,7 +330,7 @@ export async function* answerQuestionStream({ question, sessionId = "", mode: ex
   let retrieval = { results: [], intents: [], spotMatches: [] };
   if (!preSensitive.sensitive && !preScope.outOfScope) {
     try {
-      retrieval = hybridSearch(query, { limit: 5 });
+      retrieval = hybridSearch(query, { limit: 5, locale: responseLocale });
     } catch (error) {
       if (error.code !== "KNOWLEDGE_NOT_BUILT") {
         throw error;
@@ -336,10 +349,16 @@ export async function* answerQuestionStream({ question, sessionId = "", mode: ex
     mode,
     question: trimmed,
     retrieval,
-    extras: { sensitiveCategory, otherPlace }
+    extras: { sensitiveCategory, otherPlace, locale: responseLocale }
   });
   const results = scenario === "grounded" ? retrieval.results : [];
-  const messages = buildMessages({ mode, question: trimmed, results, history: getHistory(sessionId) });
+  const messages = buildMessages({
+    mode,
+    question: trimmed,
+    results,
+    history: getHistory(sessionId),
+    locale: responseLocale
+  });
 
   let full = "";
   for await (const delta of llmStream({ messages, meta, signal })) {

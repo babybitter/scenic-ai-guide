@@ -2,9 +2,12 @@
 // offline mock provider. Asserts scenario routing, quality labels, grounding
 // and length rules. Run: npm run test:chat
 import assert from "node:assert";
-import { answerQuestion } from "../src/services/chat.mjs";
-import { generateSpotNarration, generateAccompanyNarration } from "../src/services/narration.mjs";
-import { clearFaqCache } from "../src/services/faqCache.mjs";
+
+process.env.LLM_PROVIDER = "mock";
+const { answerQuestion } = await import("../src/services/chat.mjs");
+const { generateSpotNarration, generateAccompanyNarration } = await import("../src/services/narration.mjs");
+const { clearFaqCache } = await import("../src/services/faqCache.mjs");
+const { buildTextDocumentChunks } = await import("../src/services/knowledgeBuild.mjs");
 
 const results = [];
 function record(name, fn) {
@@ -23,6 +26,58 @@ await record("factual height answer is grounded and short", async () => {
   assert.ok(r.citations.length > 0, "expected citations");
   assert.ok(/88|米|通高|高/.test(r.answer), `answer should mention height: ${r.answer}`);
   assert.ok(charLen(r.answer) <= 200, `qa answer too long: ${charLen(r.answer)}`);
+});
+
+const multilingualQuestions = [
+  {
+    locale: "en",
+    question: "How tall is the Lingshan Grand Buddha?",
+    answerPattern: /88 meters/i,
+    source: "lingshan-guide.en.md"
+  },
+  {
+    locale: "ko",
+    question: "구룡관욕 공연은 몇 시에 시작하나요?",
+    answerPattern: /하루 4~5회|당일 정확한 시작/,
+    source: "lingshan-guide.ko.md"
+  },
+  {
+    locale: "zh-TW",
+    question: "靈山梵宮的看點",
+    answerPattern: /穹頂|飛天|華藏世界/,
+    source: "lingshan-guide.zh-TW.md"
+  },
+  {
+    locale: "ja",
+    question: "営業時間は？",
+    answerPattern: /開園|営業時間|最終入場/,
+    source: "lingshan-guide.ja.md"
+  }
+];
+
+for (const testCase of multilingualQuestions) {
+  await record(`${testCase.locale} question uses localized knowledge`, async () => {
+    const r = await answerQuestion({
+      question: testCase.question,
+      locale: testCase.locale
+    });
+    assert.equal(r.scenario, "grounded", `scenario=${r.scenario}`);
+    assert.equal(r.locale, testCase.locale);
+    assert.match(r.answer, testCase.answerPattern, `answer=${r.answer}`);
+    assert.equal(r.sources[0]?.documentName, testCase.source);
+  });
+}
+
+await record("markdown knowledge documents are split into indexable sections", async () => {
+  const chunks = buildTextDocumentChunks({
+    documentId: "test_multilingual_doc",
+    fileName: "visitor-guide.en.md",
+    text: "# Visitor guide\n\n## Opening hours\nCheck today's official notice.\n\n## Route\nStart at the south gate."
+  });
+  assert.equal(chunks.length, 2);
+  assert.equal(chunks[0].language, "en");
+  assert.equal(chunks[0].title, "Opening hours");
+  assert.match(chunks[1].content, /south gate/);
 });
 
 await record("explain mode is longer", async () => {

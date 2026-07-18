@@ -1,12 +1,14 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+.setup-tools/
+.setup-logs/
 
 # Env & secrets
-# Frontend .env / .env.development / .env.production are non-secret config and ARE tracked.
-# Real secrets go in .env.local (frontend) or server/.env (backend) and stay untracked.
+# Frontend environment-specific defaults are tracked; local credentials stay untracked.
 .env.local
 *.env.local
+web/.env
 server/.env
 *.local
 

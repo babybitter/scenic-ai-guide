@@ -6,8 +6,11 @@ import { writeFileSync } from "node:fs";
 import { extname, join } from "node:path";
 import { config } from "../config.mjs";
 import { getDb } from "../db/database.mjs";
+import { extractDocxText } from "./docx.mjs";
+import { indexTextKnowledgeDocument } from "./knowledgeBuild.mjs";
 
 const allowedExtensions = new Set([".docx", ".xlsx", ".txt", ".md", ".pdf"]);
+const indexableExtensions = new Set([".docx", ".txt", ".md"]);
 
 function toUpload(row) {
   return {
@@ -52,11 +55,12 @@ export function createUpload({ fileName, mimeType = "application/octet-stream", 
     mime_type: mimeType,
     size: buffer.length,
     file_type: extension.replace(".", ""),
-    status: "uploaded",
+    status: indexableExtensions.has(extension) ? "processing" : "uploaded",
     chunk_count: 0,
     created_at: new Date().toISOString()
   };
-  getDb()
+  const db = getDb();
+  db
     .prepare(
       `INSERT INTO knowledge_documents
          (id, file_name, stored_name, mime_type, size, file_type, status, chunk_count, created_at)
@@ -64,6 +68,31 @@ export function createUpload({ fileName, mimeType = "application/octet-stream", 
          (@id, @file_name, @stored_name, @mime_type, @size, @file_type, @status, @chunk_count, @created_at)`
     )
     .run(record);
+
+  if (indexableExtensions.has(extension)) {
+    try {
+      const text = extension === ".docx" ? extractDocxText(storedPath) : buffer.toString("utf8");
+      const document = indexTextKnowledgeDocument({
+        documentId: id,
+        fileName,
+        text,
+        fileType: record.file_type
+      });
+      db.prepare(
+        "UPDATE knowledge_documents SET status = 'processed', chunk_count = ? WHERE id = ?"
+      ).run(document.chunkCount, id);
+      record.status = "processed";
+      record.chunk_count = document.chunkCount;
+    } catch (error) {
+      db.prepare(
+        "UPDATE knowledge_documents SET status = 'failed', chunk_count = 0 WHERE id = ?"
+      ).run(id);
+      error.statusCode ||= 422;
+      error.code ||= "KNOWLEDGE_INDEX_FAILED";
+      throw error;
+    }
+  }
+
   return toUpload(record);
 }
 

@@ -13,6 +13,7 @@
     "backup": "node scripts/backup-data.mjs",
     "restore": "node scripts/restore-data.mjs",
     "build:knowledge": "node scripts/build-knowledge.mjs",
+    "test:uploads": "node scripts/test-uploads.mjs",
     "test:retrieval": "node scripts/test-retrieval.mjs",
     "eval:retrieval": "node scripts/eval-retrieval.mjs",
     "eval:chat": "node scripts/eval-chat-accuracy.mjs",

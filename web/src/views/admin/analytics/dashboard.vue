@@ -39,7 +39,7 @@
         </div>
         <div class="filter-right">
           <span v-if="dashboard?.generatedAt" class="generated-at">
-            {{ $t('app.analyticsUpdated', { time: dashboard.generatedAt }) }}
+            {{ $t('app.analyticsUpdated', { time: formattedGeneratedAt }) }}
           </span>
           <ElButton :loading="loading" @click="reload">{{ $t('app.analyticsRefresh') }}</ElButton>
           <ElButton type="primary" :loading="importing" @click="handleImport">
@@ -174,7 +174,7 @@
 
   defineOptions({ name: 'AnalyticsDashboard' })
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   // 景区 / 禅意主题配色
   const PALETTE = ['#135158', '#1c6b6b', '#d4af37', '#3dcd9f', '#8bb8a0', '#c98f2e']
@@ -184,6 +184,23 @@
   const loading = ref(false)
   const importing = ref(false)
   const dashboard = ref<DashboardData | null>(null)
+
+  const formattedGeneratedAt = computed(() => {
+    const value = dashboard.value?.generatedAt
+    if (!value) return ''
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+
+    return new Intl.DateTimeFormat(locale.value, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(date)
+  })
 
   const filters = reactive({
     gender: 'all',

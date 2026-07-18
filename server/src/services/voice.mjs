@@ -237,7 +237,7 @@ function synthesizeXfyunSegment({ text, voice, speed, signal }) {
   });
 }
 
-export async function voiceAsk({ audioBase64 = "", mimeType = "", transcript = "", question = "", sessionId = "", mode = "", signal } = {}) {
+export async function voiceAsk({ audioBase64 = "", mimeType = "", transcript = "", question = "", sessionId = "", mode = "", locale = "", signal } = {}) {
   const started = nowMs();
   const asrStart = nowMs();
   const asr = question
@@ -245,7 +245,7 @@ export async function voiceAsk({ audioBase64 = "", mimeType = "", transcript = "
     : await transcribeAudio({ audioBase64, mimeType, transcript, signal });
   const asrMs = nowMs() - asrStart;
 
-  const cacheKey = `voice::${asr.text}::${mode || "auto"}`;
+  const cacheKey = `voice::${locale || "auto"}::${asr.text}::${mode || "auto"}`;
   const cached = getCachedAnswer(cacheKey, "voice");
   let answer;
   let ragMs = 0;
@@ -254,7 +254,7 @@ export async function voiceAsk({ audioBase64 = "", mimeType = "", transcript = "
     answer = cached.answerPayload;
   } else {
     const answerStart = nowMs();
-    answer = await answerQuestion({ question: asr.text, sessionId, mode, signal });
+    answer = await answerQuestion({ question: asr.text, sessionId, mode, locale, signal });
     ragMs = answer.latency?.retrievalMs || 0;
     llmMs = answer.latency?.llmMs || 0;
     setCachedAnswer(cacheKey, "voice", { answerPayload: answer }, 1000 * 60 * 10);

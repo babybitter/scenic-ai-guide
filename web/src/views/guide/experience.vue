@@ -315,7 +315,11 @@
     asking.value = true
     statusTip.value = t('app.guideThinking')
     try {
-      const answer = await askQuestion({ question, sessionId: sessionId.value })
+      const answer = await askQuestion({
+        question,
+        sessionId: sessionId.value,
+        locale: locale.value
+      })
       messages.value.push({
         role: 'assistant',
         content: answer.answer,

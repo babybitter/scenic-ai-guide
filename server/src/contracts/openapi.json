@@ -25,7 +25,7 @@
         "summary": "List uploaded knowledge files"
       },
       "post": {
-        "summary": "Upload a knowledge file using base64 content"
+        "summary": "Upload a knowledge file using base64 content; DOCX, Markdown and text files are indexed immediately"
       }
     },
     "/api/schema": {
@@ -40,7 +40,7 @@
     },
     "/api/knowledge/rebuild": {
       "post": {
-        "summary": "Rebuild local Lingshan knowledge assets from official DOCX files"
+        "summary": "Rebuild local Lingshan knowledge assets from official DOCX and supplemental Markdown files"
       }
     },
     "/api/scenic-spots": {
@@ -71,6 +71,7 @@
                   "question": { "type": "string" },
                   "sessionId": { "type": "string" },
                   "mode": { "type": "string", "enum": ["qa", "explain", "route"] },
+                  "locale": { "type": "string", "enum": ["zh", "en", "ko", "zh-TW", "ja"] },
                   "history": {
                     "type": "array",
                     "items": {

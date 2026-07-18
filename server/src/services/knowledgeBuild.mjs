@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { basename, extname, join, resolve } from "node:path";
 import { config } from "../config.mjs";
 import { extractDocxText } from "./docx.mjs";
 
@@ -64,6 +64,14 @@ const guideHeadings = [
 export function buildKnowledge({ sourceDir = resolve(process.cwd(), "..", "docs", "scenic-materials") } = {}) {
   const structuredPath = join(sourceDir, STRUCTURED_DOC);
   const guidePath = join(sourceDir, GUIDE_DOC);
+  const existingKnowledge = loadKnowledge();
+  const uploadedDocuments = (existingKnowledge?.documents || []).filter((document) =>
+    String(document.id || "").startsWith("upload_")
+  );
+  const uploadedDocumentIds = new Set(uploadedDocuments.map((document) => document.id));
+  const uploadedChunks = (existingKnowledge?.chunks || []).filter((chunk) =>
+    uploadedDocumentIds.has(chunk.documentId)
+  );
 
   assertFile(structuredPath);
   assertFile(guidePath);
@@ -75,13 +83,20 @@ export function buildKnowledge({ sourceDir = resolve(process.cwd(), "..", "docs"
   const guideText = extractDocxText(guidePath);
   const spots = parseStructuredSpots(structuredText);
   const guideSections = parseGuideSections(guideText);
-  const chunks = buildChunks(spots, guideSections);
+  const baseChunks = buildChunks(spots, guideSections);
+  const supplementalDocuments = loadSupplementalMarkdown(sourceDir, spots);
+  const chunks = [
+    ...baseChunks,
+    ...supplementalDocuments.flatMap((document) => document.chunks),
+    ...uploadedChunks
+  ];
 
   const documents = [
     {
       id: "doc_structured_lingshan_spots",
       fileName: STRUCTURED_DOC,
       fileType: "docx",
+      language: "zh",
       status: "processed",
       chunkCount: chunks.filter((chunk) => chunk.documentId === "doc_structured_lingshan_spots").length,
       createdAt: new Date().toISOString()
@@ -90,10 +105,18 @@ export function buildKnowledge({ sourceDir = resolve(process.cwd(), "..", "docs"
       id: "doc_lingshan_guide",
       fileName: GUIDE_DOC,
       fileType: "docx",
+      language: "zh",
       status: "processed",
       chunkCount: chunks.filter((chunk) => chunk.documentId === "doc_lingshan_guide").length,
       createdAt: new Date().toISOString()
-    }
+    },
+    ...supplementalDocuments.map(({ chunks: documentChunks, ...document }) => ({
+      ...document,
+      status: "processed",
+      chunkCount: documentChunks.length,
+      createdAt: new Date().toISOString()
+    })),
+    ...uploadedDocuments
   ];
 
   const result = {
@@ -122,6 +145,91 @@ export function loadKnowledge() {
   }
 
   return JSON.parse(readFileSync(filePath, "utf8"));
+}
+
+export function buildTextDocumentChunks({
+  documentId,
+  fileName,
+  text,
+  fileType = extname(fileName).replace(".", "") || "txt",
+  spots = []
+}) {
+  const sections = parseTextSections(text, fileName);
+  const language = inferDocumentLanguage(fileName, text);
+  const chunks = [];
+
+  for (const section of sections) {
+    const parts = splitLongText(section.content, 700);
+    for (let index = 0; index < parts.length; index += 1) {
+      const content = parts[index];
+      chunks.push({
+        id: `${documentId}_chunk_${String(chunks.length + 1).padStart(3, "0")}`,
+        documentId,
+        scenicSpotId: matchLocalizedSpotId(section.title, spots),
+        title: section.title,
+        content,
+        keywords: extractDocumentKeywords(`${section.title} ${content}`, spots),
+        source: fileName,
+        language,
+        fileType
+      });
+    }
+  }
+
+  return chunks;
+}
+
+export function indexTextKnowledgeDocument({ documentId, fileName, text, fileType }) {
+  const knowledge = loadKnowledge();
+  if (!knowledge) {
+    const error = new Error("Knowledge base has not been built.");
+    error.statusCode = 409;
+    error.code = "KNOWLEDGE_NOT_BUILT";
+    throw error;
+  }
+
+  const chunks = buildTextDocumentChunks({
+    documentId,
+    fileName,
+    text,
+    fileType,
+    spots: knowledge.spots || []
+  });
+  if (chunks.length === 0) {
+    const error = new Error("The uploaded document does not contain indexable text.");
+    error.statusCode = 422;
+    error.code = "KNOWLEDGE_DOCUMENT_EMPTY";
+    throw error;
+  }
+
+  const createdAt = new Date().toISOString();
+  const document = {
+    id: documentId,
+    fileName,
+    fileType,
+    language: inferDocumentLanguage(fileName, text),
+    status: "processed",
+    chunkCount: chunks.length,
+    createdAt
+  };
+  const next = {
+    ...knowledge,
+    generatedAt: createdAt,
+    documents: [
+      ...(knowledge.documents || []).filter((item) => item.id !== documentId),
+      document
+    ],
+    chunks: [
+      ...(knowledge.chunks || []).filter((item) => item.documentId !== documentId),
+      ...chunks
+    ]
+  };
+  const generatedDir = join(config.dataDir, "generated");
+  mkdirSync(generatedDir, { recursive: true });
+  writeJson(join(generatedDir, "knowledge.json"), next);
+  writeJson(join(generatedDir, "knowledge-chunks.json"), next.chunks);
+
+  return document;
 }
 
 export function parseStructuredSpots(text) {
@@ -280,7 +388,8 @@ export function buildChunks(spots, guideSections) {
         .filter(Boolean)
         .join("\n"),
       keywords: extractKeywords(`${spot.name} ${spot.aliases.join(" ")} ${spot.detail} ${spot.highlights}`),
-      source: STRUCTURED_DOC
+      source: STRUCTURED_DOC,
+      language: "zh"
     });
   }
 
@@ -293,7 +402,8 @@ export function buildChunks(spots, guideSections) {
         title: section.title,
         content: part,
         keywords: section.keywords,
-        source: GUIDE_DOC
+        source: GUIDE_DOC,
+        language: "zh"
       });
     }
   }
@@ -397,7 +507,15 @@ function buildAliases(name, scenicArea) {
     香月花街: ["花街", "禅意商业街"],
     拈花堂: ["禅堂", "抄经"],
     五灯湖: ["灯光秀", "禅行"],
-    鹿鸣谷: ["山谷", "鹿鸣"]
+    鹿鸣谷: ["山谷", "鹿鸣"],
+    灵山大佛: ["Lingshan Grand Buddha", "Lingshan Buddha", "링산대불", "靈山大佛", "霊山大仏"],
+    九龙灌浴: ["Nine Dragons Bathing", "Nine Dragons Bathing show", "구룡관욕", "九龍灌浴"],
+    灵山梵宫: ["Lingshan Brahma Palace", "Brahma Palace", "Fan Gong", "링산 범궁", "靈山梵宮", "霊山梵宮"],
+    五印坛城: ["Five Mudra Mandala", "Five-Seal Mandala", "오인단성", "五印壇城"],
+    祥符禅寺: ["Xiangfu Chan Temple", "Xiangfu Temple", "상부선사", "祥符禪寺", "祥符禅寺"],
+    百子戏弥勒: ["Hundred Children Playing with Maitreya", "백자희미륵", "百子戲彌勒", "百子戯弥勒"],
+    菩提大道: ["Bodhi Avenue", "보리대도", "菩提大道"],
+    曼飞龙塔: ["Manfeilong Pagoda", "만비룡탑", "曼飛龍塔"]
   };
   for (const alias of spotAliases[name] || []) {
     aliases.add(alias);
@@ -427,6 +545,119 @@ function buildAliases(name, scenicArea) {
   return [...aliases];
 }
 
+function loadSupplementalMarkdown(sourceDir, spots) {
+  return readdirSync(sourceDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".md"))
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((entry) => {
+      const fileName = entry.name;
+      const documentId = documentIdForFile(fileName);
+      const text = readFileSync(join(sourceDir, fileName), "utf8");
+      return {
+        id: documentId,
+        fileName,
+        fileType: "md",
+        language: inferDocumentLanguage(fileName, text),
+        chunks: buildTextDocumentChunks({
+          documentId,
+          fileName,
+          text,
+          fileType: "md",
+          spots
+        })
+      };
+    });
+}
+
+function parseTextSections(text, fileName) {
+  const fallbackTitle = basename(fileName, extname(fileName));
+  const lines = String(text || "").replace(/\r/g, "").split("\n");
+  const sections = [];
+  let documentTitle = fallbackTitle;
+  let currentTitle = fallbackTitle;
+  let content = [];
+
+  const flush = () => {
+    const value = content.join("\n").trim();
+    if (value) {
+      sections.push({ title: currentTitle || documentTitle, content: value });
+    }
+    content = [];
+  };
+
+  for (const line of lines) {
+    const heading = line.match(/^#{1,6}\s+(.+?)\s*$/);
+    if (!heading) {
+      content.push(line);
+      continue;
+    }
+
+    flush();
+    const level = line.match(/^#+/)?.[0].length || 1;
+    const title = heading[1].trim();
+    if (level === 1) {
+      documentTitle = title;
+    }
+    currentTitle = title || documentTitle;
+  }
+  flush();
+
+  if (sections.length === 0) {
+    const value = String(text || "").trim();
+    return value ? [{ title: documentTitle, content: value }] : [];
+  }
+  return sections;
+}
+
+function matchLocalizedSpotId(title, spots) {
+  const normalizedTitle = normalizeSearchText(title);
+  const spot = spots.find((item) =>
+    (item.aliases || [item.name]).some((alias) => normalizedTitle.includes(normalizeSearchText(alias)))
+  );
+  return spot?.id || null;
+}
+
+function extractDocumentKeywords(text, spots) {
+  const normalizedText = normalizeSearchText(text);
+  const aliases = spots
+    .flatMap((spot) => spot.aliases || [spot.name])
+    .filter((alias) => normalizedText.includes(normalizeSearchText(alias)));
+  const lexical = String(text || "")
+    .toLowerCase()
+    .match(/[\p{L}\p{N}][\p{L}\p{N}-]{1,}/gu) || [];
+  return [...new Set([...aliases, ...lexical])].slice(0, 40);
+}
+
+function documentIdForFile(fileName) {
+  const stem = basename(fileName, extname(fileName))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return `doc_${stem || "supplemental"}`;
+}
+
+function inferDocumentLanguage(fileName, text = "") {
+  const normalized = String(fileName || "").toLowerCase();
+  if (/(^|[._-])zh[-_]?tw([._-]|$)/.test(normalized)) return "zh-TW";
+  if (/(^|[._-])en([._-]|$)/.test(normalized)) return "en";
+  if (/(^|[._-])ko([._-]|$)/.test(normalized)) return "ko";
+  if (/(^|[._-])ja([._-]|$)/.test(normalized)) return "ja";
+
+  const content = String(text || "");
+  if (/[\uac00-\ud7af]/u.test(content)) return "ko";
+  if (/[\u3040-\u30ff]/u.test(content)) return "ja";
+  if (/[靈灣點開間覽價線體與於臺龍門歷]/u.test(content)) return "zh-TW";
+  const latinCount = (content.match(/[a-z]/giu) || []).length;
+  const cjkCount = (content.match(/[\u3400-\u9fff]/gu) || []).length;
+  if (latinCount >= 20 && latinCount > cjkCount * 2) return "en";
+  if (cjkCount > 0) return "zh";
+  return "und";
+}
+
+function normalizeSearchText(value) {
+  return String(value || "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
 function matchSpotId(title, content, spots) {
   if (/(路线|贴士|时间|政策|推荐)/.test(title)) {
     return null;
@@ -443,7 +674,7 @@ function splitLongText(text, maxLength) {
     return [clean];
   }
 
-  const sentences = clean.split(/(?<=[。！？；])/);
+  const sentences = clean.split(/(?<=[。！？；])|(?<=[.!?])\s+/);
   const parts = [];
   let current = "";
 

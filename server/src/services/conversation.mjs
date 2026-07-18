@@ -79,7 +79,10 @@ export function getLastSpotName(sessionId, spotNames = []) {
     .prepare("SELECT content FROM messages WHERE session_id = ? ORDER BY created_at DESC, rowid DESC")
     .all(sessionId);
   for (const row of rows) {
-    const hit = spotNames.find((name) => name && row.content.includes(name));
+    const content = String(row.content || "").normalize("NFKC").toLowerCase();
+    const hit = spotNames.find((name) =>
+      name && content.includes(String(name).normalize("NFKC").toLowerCase())
+    );
     if (hit) {
       return hit;
     }

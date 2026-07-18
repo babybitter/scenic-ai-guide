@@ -216,8 +216,8 @@ async function route(req, res, url) {
     const body = await readJson(req);
     const mode = body.mode === "keyword" ? "keyword" : "hybrid";
     const result = mode === "keyword"
-      ? keywordSearch(body.query, { limit: body.limit })
-      : hybridSearch(body.query, { limit: body.limit });
+      ? keywordSearch(body.query, { limit: body.limit, locale: body.locale })
+      : hybridSearch(body.query, { limit: body.limit, locale: body.locale });
     ok(res, result);
     return;
   }
@@ -243,7 +243,8 @@ async function route(req, res, url) {
       question: body.question,
       sessionId: body.sessionId,
       mode: body.mode,
-      history: body.history
+      history: body.history,
+      locale: body.locale
     });
     ok(res, result);
     return;
@@ -304,7 +305,8 @@ async function route(req, res, url) {
       transcript: body.transcript,
       question: body.question,
       sessionId: body.sessionId,
-      mode: body.mode
+      mode: body.mode,
+      locale: body.locale
     }));
     return;
   }
@@ -571,7 +573,8 @@ async function streamChat(res, body) {
     for await (const delta of answerQuestionStream({
       question: body.question,
       sessionId: body.sessionId,
-      mode: body.mode
+      mode: body.mode,
+      locale: body.locale
     })) {
       send("delta", { text: delta });
     }

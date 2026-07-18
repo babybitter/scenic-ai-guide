@@ -25,6 +25,7 @@ export interface ChatLatency {
 export interface ChatAnswer {
   answer: string
   mode?: string
+  locale?: string
   scenario?: string
   label?: string
   emotion?: string
@@ -92,12 +93,22 @@ export function createVisitorSession() {
   return request.post<{ id: string; createdAt: string }>({ url: '/api/visitor/session' })
 }
 
-export function askQuestion(data: { question: string; sessionId?: string; mode?: string }) {
+export function askQuestion(data: {
+  question: string
+  sessionId?: string
+  mode?: string
+  locale?: string
+}) {
   return request.post<ChatAnswer>({ url: '/api/chat/ask', data })
 }
 
 export function narrateSpot(data: { spotId?: string; spotName?: string }) {
-  return request.post<{ spotId: string; spotName: string; narration: string; citations?: ChatSource[] }>({
+  return request.post<{
+    spotId: string
+    spotName: string
+    narration: string
+    citations?: ChatSource[]
+  }>({
     url: '/api/chat/narrate',
     data
   })
@@ -111,12 +122,20 @@ export function recommendRoute(data: Record<string, unknown>) {
   return request.post<RouteRecommendResult>({ url: '/api/routes/recommend', data })
 }
 
-export function saveRoute(data: { sessionId?: string; routeId?: string; route?: unknown; preferences?: unknown }) {
+export function saveRoute(data: {
+  sessionId?: string
+  routeId?: string
+  route?: unknown
+  preferences?: unknown
+}) {
   return request.post({ url: '/api/routes/save', data })
 }
 
 export function narrateRouteNode(data: { nodeId?: string; spotId?: string; spotName?: string }) {
-  return request.post<{ spotName: string; narration: string }>({ url: '/api/routes/node/narrate', data })
+  return request.post<{ spotName: string; narration: string }>({
+    url: '/api/routes/node/narrate',
+    data
+  })
 }
 
 export function submitFeedback(data: {
@@ -142,6 +161,12 @@ export interface VoiceAskResult {
   latency?: ChatLatency
 }
 
-export function voiceAsk(data: { transcript?: string; audioBase64?: string; mimeType?: string; sessionId?: string }) {
+export function voiceAsk(data: {
+  transcript?: string
+  audioBase64?: string
+  mimeType?: string
+  sessionId?: string
+  locale?: string
+}) {
   return request.post<VoiceAskResult>({ url: '/api/voice/ask', data })
 }
