@@ -9,6 +9,12 @@ import {
 
 const active = getActiveDigitalHumanConfig();
 assert.equal(active.enabled, true);
+assert.equal(active.id, "dh_xf_daolan_female_a");
+assert.equal(active.name, "云觉·大佛文化使（女）");
+assert.equal(active.engine, "xfyun");
+assert.equal(active.avatarId, "cnrmkf0e2000000006");
+assert.equal(active.vcn, "x6_jingqudaolannvsheng_mini");
+assert.equal(active.voiceId, "x6_jingqudaolannvsheng_mini");
 assert.ok(active.avatarId, "active config exposes an iFlytek avatarId");
 assert.ok(active.assetAvailable, "avatar is streamable when avatarId is set");
 

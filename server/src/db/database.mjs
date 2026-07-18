@@ -272,17 +272,17 @@ function seedDigitalHuman(instance) {
          @speech_rate, @welcome_text, @emotion_style, @service_status, @enabled, @updated_at)`
     )
     .run({
-      id: "dh_default_lingshan",
-      name: DIGITAL_HUMAN_NAMES.receptionMale,
+      id: "dh_xf_daolan_female_a",
+      name: DIGITAL_HUMAN_NAMES.scenicFemaleA,
       engine: "xfyun",
-      avatar_id: process.env.DEFAULT_AVATAR_ID || "cnr5dg8n2000000003",
-      vcn: process.env.DEFAULT_AVATAR_VCN || "x5_lingxiaoyue_flow",
+      avatar_id: process.env.DEFAULT_AVATAR_ID || "cnrmkf0e2000000006",
+      vcn: process.env.DEFAULT_AVATAR_VCN || "x6_jingqudaolannvsheng_mini",
       model_id: "",
       character_asset: "",
       appearance: "xfyun-interactive-avatar",
       outfit: "guide-uniform",
       theme: "lingshan-teal-gold",
-      voice_id: process.env.DEFAULT_AVATAR_VCN || "x5_lingxiaoyue_flow",
+      voice_id: process.env.DEFAULT_AVATAR_VCN || "x6_jingqudaolannvsheng_mini",
       speech_rate: 1,
       welcome_text:
         "您好，我是灵山胜境 AI 导游，可以为您讲解景点、规划路线并回答游览问题。",
@@ -296,7 +296,8 @@ function seedDigitalHuman(instance) {
 // Catalog of ready-to-use avatars. Unlike seedDigitalHuman (which only runs on
 // an empty table), these rows are upserted idempotently by fixed id via
 // INSERT OR IGNORE, so they also appear in databases that were created earlier.
-// None of them are enabled by default — an admin picks one in the console.
+// The seeded iFlytek guide remains enabled; administrators can switch to any
+// other catalog entry from the console.
 //
 // Two engines coexist here for redundancy: if the iFlytek cloud avatars are
 // unavailable, an admin can switch the visitor page to a local Live2D model
