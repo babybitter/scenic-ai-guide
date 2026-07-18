@@ -104,7 +104,9 @@
           width="100"
           align="center"
         />
-        <ElTableColumn prop="createdAt" :label="$t('app.uploadTime')" min-width="180" />
+        <ElTableColumn :label="$t('app.uploadTime')" min-width="180">
+          <template #default="{ row }">{{ formatTimestamp(row.createdAt) }}</template>
+        </ElTableColumn>
         <template #empty>
           <ElEmpty :description="$t('app.docsEmpty')" />
         </template>
@@ -117,6 +119,7 @@
   import { Refresh, UploadFilled } from '@element-plus/icons-vue'
   import { ElMessageBox } from 'element-plus'
   import { useI18n } from 'vue-i18n'
+  import { formatDateTime } from '@/utils/date'
   import {
     getKnowledgeSummary,
     getUploads,
@@ -128,7 +131,7 @@
 
   defineOptions({ name: 'KnowledgeDocuments' })
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   const summary = ref<KnowledgeSummary | null>(null)
   const uploads = ref<UploadRecord[]>([])
@@ -142,6 +145,10 @@
   function formatSize(size: number) {
     if (!size && size !== 0) return '-'
     return `${(size / 1024).toFixed(1)} KB`
+  }
+
+  function formatTimestamp(value?: string) {
+    return formatDateTime(value, locale.value)
   }
 
   function statusType(status: string) {

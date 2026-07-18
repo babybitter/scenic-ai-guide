@@ -81,6 +81,7 @@
   import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
   import { useI18n } from 'vue-i18n'
   import { generateDemoData, type DemoDataGenerationResult } from '@/api/admin'
+  import { formatDateTime } from '@/utils/date'
   import { useCommon } from '@/hooks/core/useCommon'
   import { useFastEnter } from '@/hooks/core/useFastEnter'
   import type { FastEnterApplication, FastEnterQuickLink } from '@/types/config'
@@ -108,14 +109,10 @@
 
   const formatGeneratedAt = (generatedAt?: string): string => {
     if (!generatedAt) return ''
-
-    const date = new Date(generatedAt)
-    if (Number.isNaN(date.getTime())) return generatedAt
-
-    return new Intl.DateTimeFormat(locale.value, {
+    return formatDateTime(generatedAt, locale.value, {
       dateStyle: 'medium',
       timeStyle: 'short'
-    }).format(date)
+    })
   }
 
   const buildDemoDataSummary = (result: DemoDataGenerationResult) => {

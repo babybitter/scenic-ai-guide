@@ -171,6 +171,7 @@
   import * as echarts from 'echarts'
   import { useI18n } from 'vue-i18n'
   import { getDashboard, importAnalytics, type DashboardData } from '@/api/admin'
+  import { formatDateTime } from '@/utils/date'
 
   defineOptions({ name: 'AnalyticsDashboard' })
 
@@ -188,18 +189,7 @@
   const formattedGeneratedAt = computed(() => {
     const value = dashboard.value?.generatedAt
     if (!value) return ''
-
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return value
-
-    return new Intl.DateTimeFormat(locale.value, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }).format(date)
+    return formatDateTime(value, locale.value)
   })
 
   const filters = reactive({

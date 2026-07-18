@@ -112,18 +112,17 @@
   import { useI18n } from 'vue-i18n'
   import { Refresh } from '@element-plus/icons-vue'
   import { getServiceQualityReport, type ServiceQualityReport } from '@/api/admin'
+  import { formatDateTime } from '@/utils/date'
 
   defineOptions({ name: 'OperationServiceQuality' })
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   const loading = ref(false)
   const report = ref<ServiceQualityReport | null>(null)
 
   function formatTime(value?: string) {
-    if (!value) return '-'
-    const d = new Date(value)
-    return Number.isNaN(d.getTime()) ? value : d.toLocaleString()
+    return formatDateTime(value, locale.value)
   }
 
   async function loadReport() {

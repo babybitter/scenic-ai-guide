@@ -195,6 +195,7 @@
 
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
+  import { formatDateTime } from '@/utils/date'
   import { Refresh } from '@element-plus/icons-vue'
   import { ElMessageBox } from 'element-plus'
   import {
@@ -207,7 +208,7 @@
 
   defineOptions({ name: 'OperationConversations' })
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   type AnnotationLabel = 'correct' | 'wrong' | 'needs_knowledge'
 
@@ -227,9 +228,7 @@
   const draftId = ref<string | null>(null)
 
   function formatTime(value?: string) {
-    if (!value) return '-'
-    const d = new Date(value)
-    return Number.isNaN(d.getTime()) ? value : d.toLocaleString()
+    return formatDateTime(value, locale.value)
   }
 
   function annotationText(label: string) {

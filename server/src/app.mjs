@@ -615,9 +615,16 @@ function serveStatic(res, pathname) {
   const extension = extname(filePath);
   const contentType = mimeTypes[extension] || "application/octet-stream";
   const body = readFileSync(filePath);
+  const relativePath = filePath.slice(publicDir.length).replaceAll("\\", "/");
+  const cacheControl = extension === ".html"
+    ? "no-store, no-cache, must-revalidate"
+    : relativePath.startsWith("/assets/")
+      ? "public, max-age=31536000, immutable"
+      : "no-cache";
   res.writeHead(200, {
     "content-type": contentType,
-    "content-length": body.length
+    "content-length": body.length,
+    "cache-control": cacheControl
   });
   res.end(body);
 }

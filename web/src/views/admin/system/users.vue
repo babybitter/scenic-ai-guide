@@ -23,7 +23,9 @@
           </ElTag>
         </template>
       </ElTableColumn>
-      <ElTableColumn prop="createdAt" :label="$t('app.createdAt')" min-width="180" />
+      <ElTableColumn :label="$t('app.createdAt')" min-width="180">
+        <template #default="{ row }">{{ formatTimestamp(row.createdAt) }}</template>
+      </ElTableColumn>
       <ElTableColumn :label="$t('app.actions')" width="230" fixed="right">
         <template #default="{ row }">
           <ElButton size="small" text type="primary" @click="openEdit(row)">{{
@@ -95,6 +97,7 @@
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
   import { onMounted, reactive, ref } from 'vue'
+  import { formatDateTime } from '@/utils/date'
   import {
     getAdminUsers,
     createAdminUser2,
@@ -105,7 +108,11 @@
 
   defineOptions({ name: 'SystemUsers' })
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+
+  function formatTimestamp(value?: string) {
+    return formatDateTime(value, locale.value)
+  }
 
   const users = ref<AdminUser[]>([])
   const loading = ref(false)
