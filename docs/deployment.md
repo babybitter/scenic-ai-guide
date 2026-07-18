@@ -41,6 +41,71 @@ npm start            # 监听 http://127.0.0.1:5178
 - `DEMO_MODE=true`：演示模式，云服务不可用时回退到本地确定性答案，保证演示不中断。
 - `SQLITE_PATH`：数据库文件路径，默认 `./data/scenic.sqlite`。
 
+### 配置 OpenAI 或 OpenAI 兼容大模型
+
+API Key 只填写在 `server/.env`，不要填写到前端环境文件，也不要提交到 Git：
+
+```dotenv
+LLM_PROVIDER=openai
+LLM_API_KEY=sk-替换为真实密钥
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini
+DEMO_MODE=true
+```
+
+`LLM_MODEL` 必须填写 API 提供方和当前账号实际可用的模型 ID。项目通过
+`POST /v1/chat/completions` 调用模型；使用第三方 OpenAI 兼容服务时，同时替换
+`LLM_BASE_URL`、`LLM_API_KEY` 和 `LLM_MODEL`。修改后必须重启后端，可访问
+`http://127.0.0.1:5178/api/health` 检查当前 provider 是否已经从 `mock` 变为 `openai`。
+
+## Windows 11 一键安装
+
+在项目根目录打开 PowerShell。首次运行脚本时如被执行策略阻止，只对当前进程临时放行：
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+```
+
+离线 Mock 模式安装、初始化数据库并构建生产版本：
+
+```powershell
+.\scripts\setup-windows.ps1
+```
+
+只检查新电脑环境，不安装软件、不修改配置和数据：
+
+```powershell
+.\scripts\setup-windows.ps1 -CheckOnly
+```
+
+交互式输入 API Key，配置 OpenAI 兼容模型，并在安装后启动生产服务：
+
+```powershell
+.\scripts\setup-windows.ps1 `
+  -ConfigureCloudLlm `
+  -LlmBaseUrl "https://api.openai.com/v1" `
+  -LlmModel "填写账号实际可用的模型ID" `
+  -StartAfterInstall
+```
+
+脚本会自动检查或通过 `winget` 安装 Node.js LTS，安装 pnpm，执行后端 `npm ci`、
+数据库初始化、工程检查、前端依赖安装与生产构建。`npm ci` 会重新安装
+`better-sqlite3`，避免复制旧电脑的 `node_modules` 后出现 Node ABI 不匹配。建议只复制源码和锁文件，
+不要把两端的 `node_modules` 一起拷到新电脑。
+
+常用边界参数：
+
+- `-Mode Development`：额外检查前端开发端口 3006，并在完成后提示双终端开发命令。
+- `-NpmRegistry "https://registry.npmmirror.com/"`：官方 npm 网络不可达时显式指定可用镜像。
+- `-InstallBuildTools`：若 `better-sqlite3` 没有匹配当前 Node 的预编译包，自动安装 Visual C++ Build Tools 后重试。
+- `-SkipNetworkCheck`：仅跳过前置联网探测，依赖尚未缓存时安装仍然需要网络。
+- `-SkipTests`：跳过数据库、检索、路线、数字人和降级测试；正式部署和比赛电脑不建议使用。
+- `-StartAfterInstall`：生产健康检查通过后保留服务运行，否则脚本会关闭临时测试服务。
+
+默认边界检查包括 Windows 版本与 64 位架构、PowerShell 版本、项目锁文件、剩余磁盘、
+npm 网络、5178/3006 端口、Node 与 pnpm 版本、LLM 配置完整性、SQLite 备份、原生依赖安装、
+数据库往返、检索、路线、数字人配置、离线降级、前端类型检查、生产构建和 `/api/health` 冒烟测试。
+
 ## 四、前端启动
 
 ```bash

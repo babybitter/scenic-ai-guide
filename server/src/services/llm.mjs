@@ -47,13 +47,22 @@ class OpenAiCompatibleProvider {
   }
 
   buildBody({ messages, temperature, maxTokens, stream }) {
-    return {
+    const body = {
       model: this.model,
       messages: messages.map((item) => ({ role: item.role, content: item.content })),
-      temperature: temperature ?? this.defaultTemperature,
-      max_tokens: maxTokens ?? 700,
       stream: Boolean(stream)
     };
+
+    // GPT-5-family Chat Completions models use max_completion_tokens. Omitting
+    // temperature also supports reasoning variants with fixed sampling.
+    if (/^gpt-5(?:[.-]|$)/i.test(this.model)) {
+      body.max_completion_tokens = maxTokens ?? 700;
+    } else {
+      body.temperature = temperature ?? this.defaultTemperature;
+      body.max_tokens = maxTokens ?? 700;
+    }
+
+    return body;
   }
 
   async request(body, { signal } = {}) {
